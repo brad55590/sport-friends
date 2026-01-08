@@ -1,11 +1,11 @@
 # SportFriends - Project Setup
 
-## Quick Start with Docker
+## Quick Start with Podman
 
-This project uses a **Docker-first approach**. All services (frontend, backend, database, cache) run in containers for consistent development environments.
+This project uses a **Podman-first approach**. All services (frontend, backend, database, cache) run in containers for consistent development environments.
 
 ### Prerequisites
-- Docker & Docker Compose (v20.10+)
+- Podman (v4.0+) and Podman Compose
 - Git
 
 ### Getting Started
@@ -18,7 +18,7 @@ cp .env.example .env
 
 2. **Start All Services**
 ```bash
-docker-compose up -d
+podman-compose up -d
 ```
 
 This will start:
@@ -30,13 +30,13 @@ This will start:
 
 3. **View Logs**
 ```bash
-docker-compose logs -f api    # Backend logs
-docker-compose logs -f web    # Frontend logs
+podman-compose logs -f api    # Backend logs
+podman-compose logs -f web    # Frontend logs
 ```
 
 4. **Stop Services**
 ```bash
-docker-compose down
+podman-compose down
 ```
 
 ---
@@ -85,7 +85,7 @@ These are the **single source of truth** for API contracts.
 
 ### `/infrastructure`
 Deployment & infrastructure code
-- `/docker`: Dockerfiles for each service
+- `/docker`: Containerfiles for each service (compatible with Podman)
 - `/azure`: Azure Bicep templates & configurations
 - `/scripts`: Deployment automation scripts
 
@@ -133,8 +133,8 @@ Header: API-Version: 1
 # Edit files in /backend/SportFriends.API/
 
 # Run migrations
-docker-compose exec api dotnet ef migrations add FeatureName --project SportFriends.Data
-docker-compose exec api dotnet ef database update
+podman-compose exec api dotnet ef migrations add FeatureName --project SportFriends.Data
+podman-compose exec api dotnet ef database update
 ```
 
 3. **Frontend Development**:
@@ -146,10 +146,10 @@ docker-compose exec api dotnet ef database update
 4. **Test Locally**:
 ```bash
 # API tests
-docker-compose exec api dotnet test
+podman-compose exec api dotnet test
 
 # Frontend tests
-docker-compose exec web npm test
+podman-compose exec web npm test
 ```
 
 ---
@@ -167,10 +167,10 @@ docker-compose exec web npm test
 ### Database
 ```bash
 # Connect to PostgreSQL
-docker-compose exec postgres psql -U sportfriends -d sportfriends
+podman-compose exec postgres psql -U sportfriends -d sportfriends
 
 # View Redis cache
-docker-compose exec redis redis-cli
+podman-compose exec redis redis-cli
 ```
 
 ---
@@ -210,22 +210,22 @@ lsof -ti:5000 | xargs kill -9
 ### Database Connection Failed
 ```bash
 # Wait for postgres to be ready
-docker-compose logs postgres
+podman-compose logs postgres
 # Should see "database system is ready to accept connections"
 ```
 
 ### Node Modules Issues
 ```bash
 # Rebuild node_modules in container
-docker-compose down
-docker-compose rm -v
-docker-compose up --build
+podman-compose down
+podman volume rm -a
+podman-compose up --build
 ```
 
-### Clear Docker Cache
+### Clear Podman Cache
 ```bash
-docker system prune -a
-docker-compose up --build
+podman system prune -a
+podman-compose up --build
 ```
 
 ---
