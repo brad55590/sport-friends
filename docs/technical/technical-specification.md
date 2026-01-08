@@ -229,7 +229,7 @@
 - **SMS** (future): Twilio, WhatsApp via Twillio
 
 #### Payments (Future)
-- **Payment Processing**: Stripe or PayPal
+- **Payment Processing**: Stripe or PayPal or Apple Pay or Google Pay
 - **Use Case**: Premium subscriptions, marketplace transactions
 
 #### Maps & Location
