@@ -226,7 +226,7 @@
 #### Communication
 - **Email**: SendGrid
 - **Push Notifications**: Firebase Cloud Messaging (FCM)
-- **SMS** (future): Twilio
+- **SMS** (future): Twilio, WhatsApp via Twillio
 
 #### Payments (Future)
 - **Payment Processing**: Stripe or PayPal
