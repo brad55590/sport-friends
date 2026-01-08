@@ -184,6 +184,7 @@
 - **Connection Pooling**: Npgsql with pgBouncer
 
 #### Caching Layer
+- ** Hybrid-Cache - supports both L1 and L2, and you can extend DistributedCache on too if it
 - **Cache**: Redis 7+
 - **Use Cases**:
   - Session management
