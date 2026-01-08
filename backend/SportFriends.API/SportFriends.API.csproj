@@ -9,20 +9,20 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.0.0" />
-    <PackageReference Include="Dapper" Version="2.1.15" />
-    <PackageReference Include="Dapper.Contrib" Version="2.1.15" />
+    <PackageReference Include="FastEndpoints" Version="5.28.0" />
+    <PackageReference Include="FastEndpoints.Swagger" Version="5.28.0" />
+    <PackageReference Include="MediatR" Version="12.2.0" />
     <PackageReference Include="Npgsql" Version="8.0.1" />
-    <PackageReference Include="FluentValidation" Version="11.9.0" />
-    <PackageReference Include="Mapster" Version="8.1.0" />
-    <PackageReference Include="Mapster.DependencyInjection" Version="1.0.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.7.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.19.0" />
     <PackageReference Include="Azure.Identity" Version="1.10.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../SportFriends.Core/SportFriends.Core.csproj" />
-    <ProjectReference Include="../SportFriends.Data/SportFriends.Data.csproj" />
+    <ProjectReference Include="../SportFriends.Shared/SportFriends.Shared.csproj" />
+    <ProjectReference Include="../SportFriends.Features.Authentication/SportFriends.Features.Authentication.csproj" />
   </ItemGroup>
 
 </Project>
