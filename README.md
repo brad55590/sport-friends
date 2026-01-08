@@ -1,0 +1,241 @@
+# SportFriends - Project Setup
+
+## Quick Start with Docker
+
+This project uses a **Docker-first approach**. All services (frontend, backend, database, cache) run in containers for consistent development environments.
+
+### Prerequisites
+- Docker & Docker Compose (v20.10+)
+- Git
+
+### Getting Started
+
+1. **Clone and Setup**
+```bash
+cd sport-friends
+cp .env.example .env
+```
+
+2. **Start All Services**
+```bash
+docker-compose up -d
+```
+
+This will start:
+- **Backend API**: http://localhost:5000
+- **Frontend Web**: http://localhost:5173
+- **PostgreSQL**: localhost:5432
+- **Redis**: localhost:6379
+- **Azure Storage Emulator**: localhost:10000
+
+3. **View Logs**
+```bash
+docker-compose logs -f api    # Backend logs
+docker-compose logs -f web    # Frontend logs
+```
+
+4. **Stop Services**
+```bash
+docker-compose down
+```
+
+---
+
+## Repository Structure
+
+### `/frontend`
+React 18 + TypeScript + Vite web application
+- Automatic hot-reload during development
+- API client with proper typing
+- Unit tests with Vitest
+
+**Commands (inside container)**:
+```bash
+npm run dev       # Development server
+npm run build     # Production build
+npm run lint      # Linting
+npm test          # Run tests
+```
+
+### `/backend`
+ASP.NET Core 8.0 REST API
+- **SportFriends.API**: Main API project with controllers
+- **SportFriends.Core**: Business logic & services
+- **SportFriends.Data**: Data access & EF Core
+- **SportFriends.Tests**: Unit & integration tests
+
+**Commands (inside container)**:
+```bash
+dotnet run                    # Run API
+dotnet test                   # Run tests
+dotnet ef migrations add NAME # Create migration
+```
+
+### `/database`
+Database migrations and seed data
+- `/migrations`: Versioned SQL migration files
+- `/seeds`: Sample data for development
+
+### `/shared`
+Shared types between frontend and backend
+- `/shared/types/typescript`: TypeScript types
+- `/shared/types/csharp`: C# DTOs & Enums
+
+These are the **single source of truth** for API contracts.
+
+### `/infrastructure`
+Deployment & infrastructure code
+- `/docker`: Dockerfiles for each service
+- `/azure`: Azure Bicep templates & configurations
+- `/scripts`: Deployment automation scripts
+
+### `/docs`
+Business and technical documentation
+
+---
+
+## API Versioning
+
+We support **both URL-based and header-based versioning**:
+
+### URL-Based (Preferred for public APIs)
+```
+GET /api/v1/users
+GET /api/v2/users
+```
+
+### Header-Based (For additional flexibility)
+```
+GET /api/users
+Header: API-Version: 1
+```
+
+**Implementation Details**:
+- Controllers in `backend/SportFriends.API/Controllers/`
+- Route: `[ApiController][Route("api/v{version:apiVersion}/[controller]")]`
+- Swagger shows all API versions
+
+---
+
+## Developing Locally
+
+### Adding a New Feature
+
+1. **Update shared types** (if needed):
+```bash
+# Edit /shared/types/typescript/index.ts
+# OR /shared/types/csharp/SharedTypes.cs
+```
+
+2. **Backend Development**:
+```bash
+# Changes to Program.cs or controllers automatically reload
+# Edit files in /backend/SportFriends.API/
+
+# Run migrations
+docker-compose exec api dotnet ef migrations add FeatureName --project SportFriends.Data
+docker-compose exec api dotnet ef database update
+```
+
+3. **Frontend Development**:
+```bash
+# Changes automatically hot-reload
+# Edit files in /frontend/src/
+```
+
+4. **Test Locally**:
+```bash
+# API tests
+docker-compose exec api dotnet test
+
+# Frontend tests
+docker-compose exec web npm test
+```
+
+---
+
+## Debugging
+
+### Backend (Visual Studio / VS Code)
+1. Attach debugger to running container
+2. Set breakpoints in Visual Studio
+
+### Frontend
+1. Open DevTools in browser (F12)
+2. Set breakpoints in Sources tab
+
+### Database
+```bash
+# Connect to PostgreSQL
+docker-compose exec postgres psql -U sportfriends -d sportfriends
+
+# View Redis cache
+docker-compose exec redis redis-cli
+```
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and update:
+
+```env
+# Database
+POSTGRES_PASSWORD=secure-password
+
+# Backend
+JWT_SECRET=your-jwt-secret
+ASPNETCORE_ENVIRONMENT=Development
+
+# Azure Storage
+AZURE_STORAGE_ACCOUNT_NAME=your-account
+AZURE_STORAGE_ACCOUNT_KEY=your-key
+
+# Frontend
+VITE_API_URL=http://localhost:5000
+VITE_API_VERSION=v1
+```
+
+---
+
+## Troubleshooting
+
+### Port Already in Use
+```bash
+# Change ports in docker-compose.yml
+# Or kill the process using the port
+lsof -ti:5000 | xargs kill -9
+```
+
+### Database Connection Failed
+```bash
+# Wait for postgres to be ready
+docker-compose logs postgres
+# Should see "database system is ready to accept connections"
+```
+
+### Node Modules Issues
+```bash
+# Rebuild node_modules in container
+docker-compose down
+docker-compose rm -v
+docker-compose up --build
+```
+
+### Clear Docker Cache
+```bash
+docker system prune -a
+docker-compose up --build
+```
+
+---
+
+## Next Steps
+
+1. **Configure Azure Credentials**: Add to `.env`
+2. **Setup CI/CD**: Add GitHub Actions workflows
+3. **Create Database Migrations**: Start with user schema
+4. **Implement Authentication**: JWT token strategy
+5. **Begin MVP Features**: User profiles, discovery, events
+
+See `/docs` for detailed specifications.

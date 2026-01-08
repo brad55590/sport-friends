@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: sport-friends-postgres
+    environment:
+      POSTGRES_USER: sportfriends
+      POSTGRES_PASSWORD: dev-password-change-in-prod
+      POSTGRES_DB: sportfriends
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/seeds:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sportfriends"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sport-friends-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: sport-friends-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sport-friends-network
+
+  # Backend API
+  api:
+    build:
+      context: ./backend
+      dockerfile: ../infrastructure/docker/Dockerfile.api
+    container_name: sport-friends-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=sportfriends;Username=sportfriends;Password=dev-password-change-in-prod"
+      Redis__ConnectionString: "redis:6379"
+      # Azure settings (add to .env)
+      # Azure__StorageAccountName: ${AZURE_STORAGE_ACCOUNT_NAME}
+      # Azure__StorageAccountKey: ${AZURE_STORAGE_ACCOUNT_KEY}
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    networks:
+      - sport-friends-network
+    command: dotnet watch run --project SportFriends.API
+
+  # Frontend Web App
+  web:
+    build:
+      context: ./frontend
+      dockerfile: ../infrastructure/docker/Dockerfile.web
+    container_name: sport-friends-web
+    environment:
+      VITE_API_URL: http://api:5000
+      VITE_API_VERSION: v1
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - sport-friends-network
+    command: npm run dev
+
+  # Azure Storage Emulator (optional for local development)
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: sport-friends-azurite
+    ports:
+      - "10000:10000"  # Blob
+      - "10001:10001"  # Queue
+      - "10002:10002"  # Table
+    volumes:
+      - azurite_data:/data
+    networks:
+      - sport-friends-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  azurite_data:
+
+networks:
+  sport-friends-network:
+    driver: bridge

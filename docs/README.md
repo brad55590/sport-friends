@@ -87,9 +87,9 @@ docs/
 - **Backend**: ASP.NET Core 8.0 Web API
 - **Database**: PostgreSQL 16 with PostGIS
 - **Cache**: Redis
-- **Storage**: AWS S3 or Azure Blob
+- **Storage**: Azure Blob Storage
 - **Real-time**: SignalR
-- **Hosting**: AWS / Azure / DigitalOcean
+- **Hosting**: Azure
 
 ---
 

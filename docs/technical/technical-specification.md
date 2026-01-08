@@ -72,7 +72,7 @@
 ┌─────────────────────────────────────────────────────────┐
 │                     Data Layer                           │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │  PostgreSQL  │  │    Redis     │  │     S3       │  │
+│  │  PostgreSQL  │  │    Redis     │  │ Azure Blob  │  │
 │  │  (Primary)   │  │   (Cache)    │  │   (Media)    │  │
 │  └──────────────┘  └──────────────┘  └──────────────┘  │
 └─────────────────────────────────────────────────────────┘
@@ -154,7 +154,7 @@
   - Real-time presence (online users)
 
 #### File Storage
-- **Storage**: AWS S3 or Azure Blob Storage
+- **Storage**: Azure Blob Storage
 - **Use Cases**:
   - Profile images
   - Event photos
@@ -173,7 +173,7 @@
 #### CI/CD
 - **Version Control**: Git (GitHub/GitLab)
 - **CI/CD Pipeline**: GitHub Actions or GitLab CI
-- **Container Registry**: Docker Hub or AWS ECR
+- **Container Registry**: Azure Container Registry (ACR)
 - **Deployment**: Blue-green or rolling deployments
 
 #### Monitoring & Analytics
@@ -185,7 +185,7 @@
 ### Third-Party Services
 
 #### Communication
-- **Email**: SendGrid or AWS SES
+- **Email**: SendGrid
 - **Push Notifications**: Firebase Cloud Messaging (FCM)
 - **SMS** (future): Twilio
 
@@ -1060,7 +1060,7 @@ Authorization: Bearer {token}
 
 ### Data Protection
 - **Encryption in Transit**: TLS 1.3 for all API communication
-- **Encryption at Rest**: Database encryption, encrypted S3 buckets
+- **Encryption at Rest**: Database encryption, encrypted Azure Blob Storage
 - **PII Protection**: Separate table for sensitive data, access logging
 - **Location Privacy**: Configurable location sharing, fuzzy location display
 
@@ -1104,7 +1104,7 @@ Authorization: Bearer {token}
 - **Access**: Restricted to internal team and beta testers
 
 ### Production Environment
-- **Hosting**: AWS / Azure / DigitalOcean
+- **Hosting**: Azure
 - **Compute**: 
   - API: Kubernetes cluster or App Service
   - Initial: 2-4 API instances behind load balancer
@@ -1118,7 +1118,7 @@ Authorization: Bearer {token}
   - Redis cluster with persistence
   - Failover and high availability
 - **Storage**:
-  - S3/Blob Storage for media
+  - Azure Blob Storage for media
   - CDN for global content delivery
 - **Monitoring**:
   - Uptime monitoring (99.9% SLA target)
@@ -1132,7 +1132,7 @@ Authorization: Bearer {token}
 - **Feature Flags**: Gradual feature rollout, A/B testing
 - **Backup Strategy**: 
   - Database: Automated daily backups
-  - Media: S3 versioning and cross-region replication
+  - Media: Azure Blob Storage versioning and geo-replication
 
 ### Disaster Recovery
 - **RTO (Recovery Time Objective)**: 4 hours

@@ -37,7 +37,7 @@ This roadmap outlines the development plan for SportFriends from initial concept
 - [ ] Configure ESLint, Prettier, StyleCop
 - [ ] Set up PostgreSQL database with PostGIS extension
 - [ ] Set up Redis for caching
-- [ ] Configure AWS/Azure accounts and S3 buckets
+- [ ] Configure Azure account and Blob Storage
 - [ ] Implement database migration framework (EF Core)
 - [ ] Set up logging infrastructure (Serilog)
 - [ ] Create initial database schema
@@ -76,7 +76,7 @@ This roadmap outlines the development plan for SportFriends from initial concept
 - [ ] Create User and Profile entities
 - [ ] Create Sports and Interests seed data
 - [ ] Implement profile CRUD endpoints
-- [ ] Implement avatar upload to S3
+- [ ] Implement avatar upload to Azure Blob Storage
 - [ ] Implement user sports and interests endpoints
 - [ ] Add email validation
 - [ ] Add input validation with FluentValidation

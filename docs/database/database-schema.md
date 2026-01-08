@@ -454,7 +454,7 @@ CREATE TABLE posts (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     sport_id UUID REFERENCES sports(id),
-    media_urls TEXT[], -- array of S3 URLs
+    media_urls TEXT[], -- array of Azure Blob Storage URLs
     media_types TEXT[], -- ['image', 'image', 'video']
     visibility VARCHAR(20) DEFAULT 'public' CHECK (visibility IN ('public', 'friends', 'private')),
     
@@ -642,7 +642,7 @@ CREATE TABLE marketplace_listings (
     brand VARCHAR(100),
     size VARCHAR(50),
     color VARCHAR(50),
-    images TEXT[], -- array of S3 URLs
+    images TEXT[], -- array of Azure Blob Storage URLs
     
     -- Location
     location_city VARCHAR(100),
