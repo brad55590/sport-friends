@@ -108,7 +108,7 @@
 - **Forms**: React Hook Form + Yup validation
 - **API Client**: Axios
 - **Maps**: Mapbox GL JS or Google Maps JavaScript API
-- **Real-time**: SignalR client for messaging
+- **Real-time**: SignalR client for messaging (SSE)?
 - **Build Tool**: Vite
 - **PWA**: Workbox for service workers
 
