@@ -15,7 +15,7 @@ public class RegisterEndpoint : Endpoint<RegisterRequest, ApiResponse<AuthRespon
         Post("/auth/register");
         AllowAnonymous();
     }
-    
+
     public override async Task HandleAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
         var result = await new RegisterUserCommand
@@ -25,7 +25,7 @@ public class RegisterEndpoint : Endpoint<RegisterRequest, ApiResponse<AuthRespon
             FirstName = request.FirstName,
             LastName = request.LastName
         }.ExecuteAsync(cancellationToken);
-        
+
         var response = ApiResponse<AuthResponse>.Success(
             data: result,
             meta: new ResponseMeta
@@ -37,7 +37,7 @@ public class RegisterEndpoint : Endpoint<RegisterRequest, ApiResponse<AuthRespon
                 { "self", "/api/v1/auth/register" }
             }
         );
-        
+
         await Send.CreatedAtAsync<GetCurrentUserEndpoint>(null, response, cancellation: cancellationToken);
     }
 }
@@ -52,7 +52,7 @@ public class LoginEndpoint : Endpoint<LoginRequest, ApiResponse<AuthResponse>>
         Post("/auth/login");
         AllowAnonymous();
     }
-    
+
     public override async Task HandleAsync(LoginRequest request, CancellationToken cancellationToken)
     {
         var result = await new LoginUserCommand
@@ -60,7 +60,7 @@ public class LoginEndpoint : Endpoint<LoginRequest, ApiResponse<AuthResponse>>
             Email = request.Email,
             Password = request.Password
         }.ExecuteAsync(cancellationToken);
-        
+
         var response = ApiResponse<AuthResponse>.Success(
             data: result,
             meta: new ResponseMeta
@@ -72,7 +72,7 @@ public class LoginEndpoint : Endpoint<LoginRequest, ApiResponse<AuthResponse>>
                 { "self", "/api/v1/auth/login" }
             }
         );
-        
+
         await Send.OkAsync(response, cancellation: cancellationToken);
     }
 }
@@ -87,14 +87,14 @@ public class RefreshTokenEndpoint : Endpoint<RefreshTokenRequest, ApiResponse<Au
         Post("/auth/refresh");
         AllowAnonymous();
     }
-    
+
     public override async Task HandleAsync(RefreshTokenRequest request, CancellationToken cancellationToken)
     {
         var result = await new RefreshTokenCommand
         {
             RefreshToken = request.RefreshToken
         }.ExecuteAsync(cancellationToken);
-        
+
         var response = ApiResponse<AuthResponse>.Success(
             data: result,
             meta: new ResponseMeta
@@ -102,7 +102,7 @@ public class RefreshTokenEndpoint : Endpoint<RefreshTokenRequest, ApiResponse<Au
                 Timestamp = DateTime.UtcNow
             }
         );
-        
+
         await Send.OkAsync(response, cancellation: cancellationToken);
     }
 }
@@ -118,19 +118,19 @@ public class GetCurrentUserEndpoint : Endpoint<EmptyRequest, ApiResponse<Current
         // Policies("Authenticated");
         Roles("Authenticated");
     }
-    
+
     public override async Task HandleAsync(EmptyRequest request, CancellationToken cancellationToken)
     {
         var userId = User.FindFirst("sub")?.Value;
         var email = User.FindFirst("email")?.Value;
         var role = User.FindFirst("role")?.Value;
-        
+
         if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email))
         {
             await Send.UnauthorizedAsync(cancellationToken);
             return;
         }
-        
+
         var response = ApiResponse<CurrentUserResponse>.Success(
             data: new CurrentUserResponse
             {
@@ -143,7 +143,7 @@ public class GetCurrentUserEndpoint : Endpoint<EmptyRequest, ApiResponse<Current
                 { "self", "/api/v1/auth/me" }
             }
         );
-        
+
         await Send.OkAsync(response, cancellation: cancellationToken);
     }
 }

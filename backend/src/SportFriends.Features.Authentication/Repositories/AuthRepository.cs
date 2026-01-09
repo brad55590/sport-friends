@@ -13,17 +13,17 @@ public interface IAuthRepository
     /// Get user by email
     /// </summary>
     Task<User?> GetUserByEmailAsync(string email);
-    
+
     /// <summary>
     /// Create new user
     /// </summary>
     Task<User> CreateUserAsync(User user);
-    
+
     /// <summary>
     /// Check if email exists
     /// </summary>
     Task<bool> EmailExistsAsync(string email);
-    
+
     /// <summary>
     /// Update last login
     /// </summary>
@@ -39,7 +39,7 @@ public class AuthRepository(string connectionString) : IAuthRepository
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
-        
+
         const string sql = """
                            SELECT 
                                id,
@@ -59,16 +59,16 @@ public class AuthRepository(string connectionString) : IAuthRepository
                            WHERE email = @Email
                            LIMIT 1
                            """;
-        
+
         var user = await connection.QuerySingleOrDefaultAsync<User>(sql, new { Email = email });
         return user;
     }
-    
+
     public async Task<User> CreateUserAsync(User user)
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
-        
+
         const string sql = """
                            INSERT INTO users
                                (
@@ -92,7 +92,7 @@ public class AuthRepository(string connectionString) : IAuthRepository
                                )
                            RETURNING *
                            """;
-        
+
         var result = await connection.QuerySingleAsync<User>(sql, new
         {
             user.Id,
@@ -103,26 +103,26 @@ public class AuthRepository(string connectionString) : IAuthRepository
             user.CreatedAt,
             user.UpdatedAt
         });
-        
+
         return result;
     }
-    
+
     public async Task<bool> EmailExistsAsync(string email)
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
-        
+
         const string sql = "SELECT COUNT(*) FROM users WHERE email = @Email";
         var count = await connection.ExecuteScalarAsync<int>(sql, new { Email = email });
-        
+
         return count > 0;
     }
-    
+
     public async Task UpdateLastLoginAsync(Guid userId)
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
-        
+
         const string sql = "UPDATE users SET last_login_at = @Now, updated_at = @Now WHERE id = @Id";
         await connection.ExecuteAsync(sql, new { Id = userId, Now = DateTime.UtcNow });
     }

@@ -1,20 +1,9 @@
 namespace SportFriends.Shared.Exceptions;
 
-/// <summary>
-/// Base application exception
-/// </summary>
-public abstract class ApplicationException(string message, string code = "INTERNAL_ERROR", int statusCode = (int)System.Net.HttpStatusCode.InternalServerError)
-    : Exception(message)
+public abstract class ApplicationException(string message, string code, int statusCode) : Exception(message)
 {
-    /// <summary>
-    /// Error code
-    /// </summary>
-    public string Code { get; set; } = code;
-
-    /// <summary>
-    /// HTTP status code
-    /// </summary>
-    public int StatusCode { get; set; } = statusCode;
+    public int StatusCode { get; } = statusCode;
+    public string Code { get; } = code;
 }
 
 /// <summary>
@@ -26,13 +15,13 @@ public class ValidationException : ApplicationException
     /// Field validation errors
     /// </summary>
     public Dictionary<string, string[]> Errors { get; set; }
-    
-    public ValidationException(Dictionary<string, string[]> errors) 
+
+    public ValidationException(Dictionary<string, string[]> errors)
         : base("Validation failed", "VALIDATION_ERROR", (int)System.Net.HttpStatusCode.UnprocessableEntity)
     {
         Errors = errors;
     }
-    
+
     public ValidationException(string fieldName, string error)
         : base("Validation failed", "VALIDATION_ERROR", (int)System.Net.HttpStatusCode.UnprocessableEntity)
     {
@@ -45,11 +34,11 @@ public class ValidationException : ApplicationException
 /// </summary>
 public class NotFoundException : ApplicationException
 {
-    public NotFoundException(string entityName, Guid id) 
+    public NotFoundException(string entityName, Guid id)
         : base($"{entityName} with ID {id} not found", "NOT_FOUND", (int)System.Net.HttpStatusCode.NotFound)
     {
     }
-    
+
     public NotFoundException(string message)
         : base(message, "NOT_FOUND", 404)
     {

@@ -3,6 +3,7 @@ using FastEndpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using SportFriends.Features.Authentication.Repositories;
 using SportFriends.Features.Authentication.Services;
 using SportFriends.Shared.DTOs;
@@ -10,6 +11,11 @@ using ApplicationException = SportFriends.Shared.Exceptions.ApplicationException
 using ErrorResponse = SportFriends.Shared.DTOs.ErrorResponse;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Local"))
+{
+    builder.Configuration.AddUserSecrets<Program>();
+}
 
 // Get configuration
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "your-secret-key-must-be-at-least-32-characters-long";
@@ -44,15 +50,15 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Add Swagger
-builder.Services.AddSwaggerGen();
+// Add OpenApi
+builder.Services.AddOpenApi();
 
 // CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+        policy.WithOrigins("https://localhost:7237", "http://localhost:5016")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -68,8 +74,8 @@ var app = builder.Build();
 // Configure middleware
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
@@ -90,7 +96,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = Dat
     .WithName("Health");
 
 // Global exception handling middleware
-app.UseExceptionHandler((errorApp) =>
+app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
     {
@@ -98,7 +104,7 @@ app.UseExceptionHandler((errorApp) =>
         var exception = exceptionHandlerPathFeature?.Error;
 
         ApiResponse<object?> response;
-        
+
         switch (exception)
         {
             case ApplicationException appEx:
@@ -112,12 +118,12 @@ app.UseExceptionHandler((errorApp) =>
                     Timestamp = DateTime.UtcNow
                 });
                 break;
-            
+
             default:
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 response = ApiResponse<object?>.Failure(new ErrorResponse
                 {
-                    StatusCode = 500,
+                    StatusCode = (int)System.Net.HttpStatusCode.InternalServerError,
                     Code = "INTERNAL_ERROR",
                     Message = "An unexpected error occurred",
                     Details = app.Environment.IsDevelopment() ? exception?.Message : null,
@@ -126,10 +132,10 @@ app.UseExceptionHandler((errorApp) =>
                 break;
         }
 
-        context.Response.ContentType = "application/json";
+        context.Response.ContentType = System.Net.Mime.MediaTypeNames.Application.Json;
         await context.Response.WriteAsJsonAsync(response);
     });
 });
 
-app.Run();
+await app.RunAsync();
 

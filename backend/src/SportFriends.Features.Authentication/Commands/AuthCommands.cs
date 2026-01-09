@@ -12,17 +12,17 @@ public class RegisterUserCommand : ICommand<AuthResponse>
     /// User email
     /// </summary>
     public required string Email { get; set; }
-    
+
     /// <summary>
     /// User password
     /// </summary>
     public required string Password { get; set; }
-    
+
     /// <summary>
     /// First name
     /// </summary>
     public required string FirstName { get; set; }
-    
+
     /// <summary>
     /// Last name
     /// </summary>
@@ -38,7 +38,7 @@ public class LoginUserCommand : ICommand<AuthResponse>
     /// User email
     /// </summary>
     public required string Email { get; set; }
-    
+
     /// <summary>
     /// User password
     /// </summary>

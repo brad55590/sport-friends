@@ -10,22 +10,22 @@ public class ApiResponse<T>
     /// Response data (null for error responses)
     /// </summary>
     public T? Data { get; set; }
-    
+
     /// <summary>
     /// Response metadata (pagination, counts, etc.)
     /// </summary>
     public ResponseMeta? Meta { get; set; }
-    
+
     /// <summary>
     /// HATEOAS links
     /// </summary>
     public Dictionary<string, string>? Links { get; set; }
-    
+
     /// <summary>
     /// Error information (null for successful responses)
     /// </summary>
     public ErrorResponse? Error { get; set; }
-    
+
     /// <summary>
     /// Create successful response
     /// </summary>
@@ -38,7 +38,7 @@ public class ApiResponse<T>
             Links = links
         };
     }
-    
+
     /// <summary>
     /// Create error response
     /// </summary>
@@ -60,32 +60,32 @@ public class ResponseMeta
     /// Current page number
     /// </summary>
     public int? Page { get; set; }
-    
+
     /// <summary>
     /// Items per page
     /// </summary>
     public int? Limit { get; set; }
-    
+
     /// <summary>
     /// Total number of items
     /// </summary>
     public int? Total { get; set; }
-    
+
     /// <summary>
     /// Total number of pages
     /// </summary>
     public int? TotalPages { get; set; }
-    
+
     /// <summary>
     /// Is there a next page
     /// </summary>
     public bool? HasNext { get; set; }
-    
+
     /// <summary>
     /// Is there a previous page
     /// </summary>
     public bool? HasPrev { get; set; }
-    
+
     /// <summary>
     /// Timestamp when response was generated
     /// </summary>
@@ -101,32 +101,32 @@ public class ErrorResponse
     /// HTTP status code
     /// </summary>
     public int StatusCode { get; set; }
-    
+
     /// <summary>
     /// Error code identifier
     /// </summary>
     public string Code { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Error message
     /// </summary>
     public string Message { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Detailed error information
     /// </summary>
     public string? Details { get; set; }
-    
+
     /// <summary>
     /// Field validation errors
     /// </summary>
     public Dictionary<string, string[]>? FieldErrors { get; set; }
-    
+
     /// <summary>
     /// Request ID for tracking
     /// </summary>
     public string? RequestId { get; set; }
-    
+
     /// <summary>
     /// Timestamp of error
     /// </summary>
@@ -142,12 +142,12 @@ public class PaginatedRequest
     /// Page number (1-based)
     /// </summary>
     public int Page { get; set; } = 1;
-    
+
     /// <summary>
     /// Items per page
     /// </summary>
     public int Limit { get; set; } = 20;
-    
+
     /// <summary>
     /// Validate and ensure valid ranges
     /// </summary>
@@ -169,32 +169,32 @@ public class PaginatedResponse<T>
     /// Items in current page
     /// </summary>
     public IEnumerable<T> Items { get; set; } = [];
-    
+
     /// <summary>
     /// Total number of items
     /// </summary>
     public int Total { get; set; }
-    
+
     /// <summary>
     /// Current page
     /// </summary>
     public int Page { get; set; }
-    
+
     /// <summary>
     /// Items per page
     /// </summary>
     public int Limit { get; set; }
-    
+
     /// <summary>
     /// Total pages
     /// </summary>
     public int TotalPages => (Total + Limit - 1) / Limit;
-    
+
     /// <summary>
     /// Has next page
     /// </summary>
     public bool HasNext => Page < TotalPages;
-    
+
     /// <summary>
     /// Has previous page
     /// </summary>
