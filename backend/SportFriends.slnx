@@ -1,0 +1,28 @@
+<Solution>
+  <Folder Name="/infrastructure/" />
+  <Folder Name="/infrastructure/migrations/">
+    <File Path="infrastructure\migrations\001_init_extensions.sql" />
+    <File Path="infrastructure\migrations\002_create_users_table.sql" />
+    <File Path="infrastructure\migrations\003_create_profiles_table.sql" />
+    <File Path="infrastructure\migrations\004_create_sports_and_user_sports_tables.sql" />
+    <File Path="infrastructure\migrations\005_create_interests_tables.sql" />
+    <File Path="infrastructure\migrations\006_create_friendships_table.sql" />
+    <File Path="infrastructure\migrations\007_create_events_table.sql" />
+    <File Path="infrastructure\migrations\008_create_event_attendees_table.sql" />
+    <File Path="infrastructure\migrations\009_create_posts_and_related_tables.sql" />
+    <File Path="infrastructure\migrations\010_create_conversations_and_messages_tables.sql" />
+    <File Path="infrastructure\migrations\011_create_marketplace_listings_table.sql" />
+    <File Path="infrastructure\migrations\012_create_notifications_table.sql" />
+    <File Path="infrastructure\migrations\run-migrations.sh" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/SportFriends.API/SportFriends.API.csproj" />
+    <Project Path="src/SportFriends.Core/SportFriends.Core.csproj" />
+    <Project Path="src/SportFriends.Data/SportFriends.Data.csproj" />
+    <Project Path="src/SportFriends.Features.Authentication/SportFriends.Features.Authentication.csproj" />
+    <Project Path="src/SportFriends.Shared/SportFriends.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SportFriends.Tests/SportFriends.Tests.csproj" />
+  </Folder>
+</Solution>
