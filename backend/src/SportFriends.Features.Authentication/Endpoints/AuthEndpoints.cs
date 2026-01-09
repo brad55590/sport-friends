@@ -9,15 +9,8 @@ namespace SportFriends.Features.Authentication.Endpoints;
 /// <summary>
 /// POST /auth/register - Register new user
 /// </summary>
-public class RegisterEndpoint : Endpoint<RegisterRequest, ApiResponse<AuthResponse>>
+public class RegisterEndpoint(IMediator mediator) : Endpoint<RegisterRequest, ApiResponse<AuthResponse>>
 {
-    private readonly IMediator _mediator;
-    
-    public RegisterEndpoint(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-    
     public override void Configure()
     {
         Post("/auth/register");
@@ -34,7 +27,7 @@ public class RegisterEndpoint : Endpoint<RegisterRequest, ApiResponse<AuthRespon
             LastName = req.LastName
         };
         
-        var result = await _mediator.Send(command, ct);
+        var result = await mediator.Send(command, ct);
         
         var response = ApiResponse<AuthResponse>.Success(
             data: result,
@@ -55,15 +48,8 @@ public class RegisterEndpoint : Endpoint<RegisterRequest, ApiResponse<AuthRespon
 /// <summary>
 /// POST /auth/login - User login
 /// </summary>
-public class LoginEndpoint : Endpoint<LoginRequest, ApiResponse<AuthResponse>>
+public class LoginEndpoint(IMediator mediator) : Endpoint<LoginRequest, ApiResponse<AuthResponse>>
 {
-    private readonly IMediator _mediator;
-    
-    public LoginEndpoint(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-    
     public override void Configure()
     {
         Post("/auth/login");
@@ -78,7 +64,7 @@ public class LoginEndpoint : Endpoint<LoginRequest, ApiResponse<AuthResponse>>
             Password = req.Password
         };
         
-        var result = await _mediator.Send(command, ct);
+        var result = await mediator.Send(command, ct);
         
         var response = ApiResponse<AuthResponse>.Success(
             data: result,
@@ -99,15 +85,8 @@ public class LoginEndpoint : Endpoint<LoginRequest, ApiResponse<AuthResponse>>
 /// <summary>
 /// POST /auth/refresh - Refresh access token
 /// </summary>
-public class RefreshTokenEndpoint : Endpoint<RefreshTokenRequest, ApiResponse<AuthResponse>>
+public class RefreshTokenEndpoint(IMediator mediator) : Endpoint<RefreshTokenRequest, ApiResponse<AuthResponse>>
 {
-    private readonly IMediator _mediator;
-    
-    public RefreshTokenEndpoint(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-    
     public override void Configure()
     {
         Post("/auth/refresh");
@@ -121,7 +100,7 @@ public class RefreshTokenEndpoint : Endpoint<RefreshTokenRequest, ApiResponse<Au
             RefreshToken = req.RefreshToken
         };
         
-        var result = await _mediator.Send(command, ct);
+        var result = await mediator.Send(command, ct);
         
         var response = ApiResponse<AuthResponse>.Success(
             data: result,

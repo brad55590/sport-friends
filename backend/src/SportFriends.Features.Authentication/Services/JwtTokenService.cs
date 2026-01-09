@@ -58,10 +58,10 @@ public class JwtTokenService : IJwtTokenService
         
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role),
-            new Claim("phone_verified", user.PhoneVerified.ToString().ToLower())
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, user.Role),
+            new("phone_verified", user.PhoneVerified.ToString().ToLower())
         };
         
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -104,7 +104,7 @@ public class JwtTokenService : IJwtTokenService
                 ValidAudience = _jwtAudience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
-            }, out SecurityToken validatedToken);
+            }, out var validatedToken);
             
             return principal;
         }
@@ -117,9 +117,8 @@ public class JwtTokenService : IJwtTokenService
     public Guid? GetUserIdFromToken(string token)
     {
         var principal = ValidateToken(token);
-        if (principal == null) return null;
-        
-        var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
+
+        var userIdClaim = principal?.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null) return null;
         
         if (Guid.TryParse(userIdClaim.Value, out var userId))

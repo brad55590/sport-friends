@@ -11,23 +11,15 @@ namespace SportFriends.Features.Authentication.Handlers;
 /// <summary>
 /// Handler for registering a new user
 /// </summary>
-public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, AuthResponse>
+public class RegisterUserHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
+    : IRequestHandler<RegisterUserCommand, AuthResponse>
 {
-    private readonly IAuthRepository _authRepository;
-    private readonly IJwtTokenService _tokenService;
-    
-    public RegisterUserHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
-    {
-        _authRepository = authRepository;
-        _tokenService = tokenService;
-    }
-    
     public async Task<AuthResponse> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         // Check if email already exists
-        if (await _authRepository.EmailExistsAsync(request.Email))
+        if (await authRepository.EmailExistsAsync(request.Email))
             throw new ConflictException("Email already registered", "DUPLICATE_EMAIL");
-        
+
         // Validate password
         ValidatePassword(request.Password);
         
@@ -41,7 +33,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, AuthResp
             Role = "user"
         };
         
-        var createdUser = await _authRepository.CreateUserAsync(user);
+        var createdUser = await authRepository.CreateUserAsync(user);
         
         // Create profile
         var profile = new Profile
@@ -55,8 +47,8 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, AuthResp
         // TODO: Create profile in database (will move to profile repository)
         
         // Generate tokens
-        var accessToken = _tokenService.GenerateAccessToken(createdUser);
-        var refreshToken = _tokenService.GenerateRefreshToken();
+        var accessToken = tokenService.GenerateAccessToken(createdUser);
+        var refreshToken = tokenService.GenerateRefreshToken();
         
         // TODO: Store refresh token in database
         
@@ -69,7 +61,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, AuthResp
         };
     }
     
-    private void ValidatePassword(string password)
+    private static void ValidatePassword(string password)
     {
         var errors = new List<string>();
         
@@ -79,7 +71,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, AuthResp
             errors.Add("Password must contain at least one uppercase letter");
         if (!password.Any(char.IsDigit))
             errors.Add("Password must contain at least one digit");
-        if (!password.Any(c => !char.IsLetterOrDigit(c)))
+        if (password.All(char.IsLetterOrDigit))
             errors.Add("Password must contain at least one special character");
         
         if (errors.Count > 0)
@@ -90,21 +82,13 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, AuthResp
 /// <summary>
 /// Handler for user login
 /// </summary>
-public class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthResponse>
+public class LoginUserHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
+    : IRequestHandler<LoginUserCommand, AuthResponse>
 {
-    private readonly IAuthRepository _authRepository;
-    private readonly IJwtTokenService _tokenService;
-    
-    public LoginUserHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
-    {
-        _authRepository = authRepository;
-        _tokenService = tokenService;
-    }
-    
     public async Task<AuthResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {
         // Get user by email
-        var user = await _authRepository.GetUserByEmailAsync(request.Email);
+        var user = await authRepository.GetUserByEmailAsync(request.Email);
         if (user == null)
             throw new UnauthorizedException("Invalid email or password");
         
@@ -117,11 +101,11 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthResponse>
             throw new UnauthorizedException("Account is not active");
         
         // Update last login
-        await _authRepository.UpdateLastLoginAsync(user.Id);
+        await authRepository.UpdateLastLoginAsync(user.Id);
         
         // Generate tokens
-        var accessToken = _tokenService.GenerateAccessToken(user);
-        var refreshToken = _tokenService.GenerateRefreshToken();
+        var accessToken = tokenService.GenerateAccessToken(user);
+        var refreshToken = tokenService.GenerateRefreshToken();
         
         // TODO: Store refresh token in database
         
@@ -138,17 +122,12 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthResponse>
 /// <summary>
 /// Handler for refreshing access token
 /// </summary>
-public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, AuthResponse>
+public class RefreshTokenHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
+    : IRequestHandler<RefreshTokenCommand, AuthResponse>
 {
-    private readonly IAuthRepository _authRepository;
-    private readonly IJwtTokenService _tokenService;
-    
-    public RefreshTokenHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
-    {
-        _authRepository = authRepository;
-        _tokenService = tokenService;
-    }
-    
+    private readonly IAuthRepository _authRepository = authRepository;
+    private readonly IJwtTokenService _tokenService = tokenService;
+
     public async Task<AuthResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         // TODO: Validate refresh token against database

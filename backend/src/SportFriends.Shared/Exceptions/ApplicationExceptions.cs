@@ -3,24 +3,18 @@ namespace SportFriends.Shared.Exceptions;
 /// <summary>
 /// Base application exception
 /// </summary>
-public class ApplicationException : Exception
+public abstract class ApplicationException(string message, string code = "INTERNAL_ERROR", int statusCode = (int)System.Net.HttpStatusCode.InternalServerError)
+    : Exception(message)
 {
     /// <summary>
     /// Error code
     /// </summary>
-    public string Code { get; set; }
-    
+    public string Code { get; set; } = code;
+
     /// <summary>
     /// HTTP status code
     /// </summary>
-    public int StatusCode { get; set; } = 500;
-    
-    public ApplicationException(string message, string code = "INTERNAL_ERROR", int statusCode = 500) 
-        : base(message)
-    {
-        Code = code;
-        StatusCode = statusCode;
-    }
+    public int StatusCode { get; set; } = statusCode;
 }
 
 /// <summary>
@@ -34,13 +28,13 @@ public class ValidationException : ApplicationException
     public Dictionary<string, string[]> Errors { get; set; }
     
     public ValidationException(Dictionary<string, string[]> errors) 
-        : base("Validation failed", "VALIDATION_ERROR", 422)
+        : base("Validation failed", "VALIDATION_ERROR", (int)System.Net.HttpStatusCode.UnprocessableEntity)
     {
         Errors = errors;
     }
     
     public ValidationException(string fieldName, string error)
-        : base("Validation failed", "VALIDATION_ERROR", 422)
+        : base("Validation failed", "VALIDATION_ERROR", (int)System.Net.HttpStatusCode.UnprocessableEntity)
     {
         Errors = new Dictionary<string, string[]> { { fieldName, [error] } };
     }
@@ -52,7 +46,7 @@ public class ValidationException : ApplicationException
 public class NotFoundException : ApplicationException
 {
     public NotFoundException(string entityName, Guid id) 
-        : base($"{entityName} with ID {id} not found", "NOT_FOUND", 404)
+        : base($"{entityName} with ID {id} not found", "NOT_FOUND", (int)System.Net.HttpStatusCode.NotFound)
     {
     }
     
@@ -65,46 +59,23 @@ public class NotFoundException : ApplicationException
 /// <summary>
 /// Conflict exception (e.g., duplicate email)
 /// </summary>
-public class ConflictException : ApplicationException
-{
-    public ConflictException(string message, string code = "CONFLICT")
-        : base(message, code, 409)
-    {
-    }
-}
+public class ConflictException(string message, string code = "CONFLICT") : ApplicationException(message, code, (int)System.Net.HttpStatusCode.Conflict);
 
 /// <summary>
 /// Unauthorized exception
 /// </summary>
-public class UnauthorizedException : ApplicationException
-{
-    public UnauthorizedException(string message = "Unauthorized")
-        : base(message, "UNAUTHORIZED", 401)
-    {
-    }
-}
+public class UnauthorizedException(string message = "Unauthorized") : ApplicationException(message, "UNAUTHORIZED", (int)System.Net.HttpStatusCode.Unauthorized);
 
 /// <summary>
 /// Forbidden exception
 /// </summary>
-public class ForbiddenException : ApplicationException
-{
-    public ForbiddenException(string message = "Forbidden")
-        : base(message, "FORBIDDEN", 403)
-    {
-    }
-}
+public class ForbiddenException(string message = "Forbidden") : ApplicationException(message, "FORBIDDEN", (int)System.Net.HttpStatusCode.Forbidden);
 
 /// <summary>
 /// Rate limit exceeded exception
 /// </summary>
-public class RateLimitExceededException : ApplicationException
+public class RateLimitExceededException(int retryAfter = 60)
+    : ApplicationException("Rate limit exceeded. Please try again later.", "RATE_LIMIT_EXCEEDED", (int)System.Net.HttpStatusCode.TooManyRequests)
 {
-    public int RetryAfter { get; set; }
-    
-    public RateLimitExceededException(int retryAfter = 60)
-        : base("Rate limit exceeded. Please try again later.", "RATE_LIMIT_EXCEEDED", 429)
-    {
-        RetryAfter = retryAfter;
-    }
+    public int RetryAfter { get; set; } = retryAfter;
 }
