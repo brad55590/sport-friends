@@ -12,7 +12,6 @@
     <PackageReference Include="Npgsql" />
     <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
-    <PackageReference Include="Mapster" />
     <PackageReference Include="FluentValidation" />
   </ItemGroup>
 
