@@ -1,6 +1,7 @@
 using System.Text;
 using FastEndpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using SportFriends.Features.Authentication.Repositories;
 using SportFriends.Features.Authentication.Services;
@@ -18,11 +19,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 // Add services
 builder.Services.AddFastEndpoints();
-builder.Services.AddMediatR(config =>
-{
-    config.RegisterServicesFromAssembly(typeof(Program).Assembly);
-    config.RegisterServicesFromAssemblyContaining<SportFriends.Features.Authentication.Commands.RegisterUserCommand>();
-});
 
 // Add Authentication
 builder.Services.AddAuthentication(options =>
@@ -91,18 +87,17 @@ app.UseFastEndpoints(config =>
 
 // Health check endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
-    .WithName("Health")
-    .WithOpenApi();
+    .WithName("Health");
 
 // Global exception handling middleware
 app.UseExceptionHandler((errorApp) =>
 {
     errorApp.Run(async context =>
     {
-        var exceptionHandlerPathFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
         var exception = exceptionHandlerPathFeature?.Error;
 
-        var response = new ApiResponse<object?>();
+        ApiResponse<object?> response;
         
         switch (exception)
         {

@@ -1,5 +1,4 @@
 using FastEndpoints;
-using MediatR;
 using SportFriends.Features.Authentication.Commands;
 using SportFriends.Features.Authentication.DTOs;
 using SportFriends.Shared.DTOs;
@@ -9,7 +8,7 @@ namespace SportFriends.Features.Authentication.Endpoints;
 /// <summary>
 /// POST /auth/register - Register new user
 /// </summary>
-public class RegisterEndpoint(IMediator mediator) : Endpoint<RegisterRequest, ApiResponse<AuthResponse>>
+public class RegisterEndpoint : Endpoint<RegisterRequest, ApiResponse<AuthResponse>>
 {
     public override void Configure()
     {
@@ -17,17 +16,15 @@ public class RegisterEndpoint(IMediator mediator) : Endpoint<RegisterRequest, Ap
         AllowAnonymous();
     }
     
-    public override async Task HandleAsync(RegisterRequest req, CancellationToken ct)
+    public override async Task HandleAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
-        var command = new RegisterUserCommand
+        var result = await new RegisterUserCommand
         {
-            Email = req.Email,
-            Password = req.Password,
-            FirstName = req.FirstName,
-            LastName = req.LastName
-        };
-        
-        var result = await mediator.Send(command, ct);
+            Email = request.Email,
+            Password = request.Password,
+            FirstName = request.FirstName,
+            LastName = request.LastName
+        }.ExecuteAsync(cancellationToken);
         
         var response = ApiResponse<AuthResponse>.Success(
             data: result,
@@ -41,14 +38,14 @@ public class RegisterEndpoint(IMediator mediator) : Endpoint<RegisterRequest, Ap
             }
         );
         
-        await Send.CreatedAtAsync<GetCurrentUserEndpoint>(null, response, cancellation: ct);
+        await Send.CreatedAtAsync<GetCurrentUserEndpoint>(null, response, cancellation: cancellationToken);
     }
 }
 
 /// <summary>
 /// POST /auth/login - User login
 /// </summary>
-public class LoginEndpoint(IMediator mediator) : Endpoint<LoginRequest, ApiResponse<AuthResponse>>
+public class LoginEndpoint : Endpoint<LoginRequest, ApiResponse<AuthResponse>>
 {
     public override void Configure()
     {
@@ -56,15 +53,13 @@ public class LoginEndpoint(IMediator mediator) : Endpoint<LoginRequest, ApiRespo
         AllowAnonymous();
     }
     
-    public override async Task HandleAsync(LoginRequest req, CancellationToken ct)
+    public override async Task HandleAsync(LoginRequest request, CancellationToken cancellationToken)
     {
-        var command = new LoginUserCommand
+        var result = await new LoginUserCommand
         {
-            Email = req.Email,
-            Password = req.Password
-        };
-        
-        var result = await mediator.Send(command, ct);
+            Email = request.Email,
+            Password = request.Password
+        }.ExecuteAsync(cancellationToken);
         
         var response = ApiResponse<AuthResponse>.Success(
             data: result,
@@ -78,14 +73,14 @@ public class LoginEndpoint(IMediator mediator) : Endpoint<LoginRequest, ApiRespo
             }
         );
         
-        await Send.OkAsync(response, cancellation: ct);
+        await Send.OkAsync(response, cancellation: cancellationToken);
     }
 }
 
 /// <summary>
 /// POST /auth/refresh - Refresh access token
 /// </summary>
-public class RefreshTokenEndpoint(IMediator mediator) : Endpoint<RefreshTokenRequest, ApiResponse<AuthResponse>>
+public class RefreshTokenEndpoint : Endpoint<RefreshTokenRequest, ApiResponse<AuthResponse>>
 {
     public override void Configure()
     {
@@ -93,14 +88,12 @@ public class RefreshTokenEndpoint(IMediator mediator) : Endpoint<RefreshTokenReq
         AllowAnonymous();
     }
     
-    public override async Task HandleAsync(RefreshTokenRequest req, CancellationToken ct)
+    public override async Task HandleAsync(RefreshTokenRequest request, CancellationToken cancellationToken)
     {
-        var command = new RefreshTokenCommand
+        var result = await new RefreshTokenCommand
         {
-            RefreshToken = req.RefreshToken
-        };
-        
-        var result = await mediator.Send(command, ct);
+            RefreshToken = request.RefreshToken
+        }.ExecuteAsync(cancellationToken);
         
         var response = ApiResponse<AuthResponse>.Success(
             data: result,
@@ -110,7 +103,7 @@ public class RefreshTokenEndpoint(IMediator mediator) : Endpoint<RefreshTokenReq
             }
         );
         
-        await Send.OkAsync(response, cancellation: ct);
+        await Send.OkAsync(response, cancellation: cancellationToken);
     }
 }
 
@@ -126,7 +119,7 @@ public class GetCurrentUserEndpoint : Endpoint<EmptyRequest, ApiResponse<Current
         Roles("Authenticated");
     }
     
-    public override async Task HandleAsync(EmptyRequest req, CancellationToken ct)
+    public override async Task HandleAsync(EmptyRequest request, CancellationToken cancellationToken)
     {
         var userId = User.FindFirst("sub")?.Value;
         var email = User.FindFirst("email")?.Value;
@@ -134,7 +127,7 @@ public class GetCurrentUserEndpoint : Endpoint<EmptyRequest, ApiResponse<Current
         
         if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(email))
         {
-            await Send.UnauthorizedAsync(ct);
+            await Send.UnauthorizedAsync(cancellationToken);
             return;
         }
         
@@ -151,6 +144,6 @@ public class GetCurrentUserEndpoint : Endpoint<EmptyRequest, ApiResponse<Current
             }
         );
         
-        await Send.OkAsync(response, cancellation: ct);
+        await Send.OkAsync(response, cancellation: cancellationToken);
     }
 }

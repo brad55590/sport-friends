@@ -1,4 +1,4 @@
-using MediatR;
+using FastEndpoints;
 using SportFriends.Features.Authentication.Commands;
 using SportFriends.Features.Authentication.DTOs;
 using SportFriends.Features.Authentication.Repositories;
@@ -12,23 +12,40 @@ namespace SportFriends.Features.Authentication.Handlers;
 /// Handler for registering a new user
 /// </summary>
 public class RegisterUserHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
-    : IRequestHandler<RegisterUserCommand, AuthResponse>
+    : ICommandHandler<RegisterUserCommand, AuthResponse>
 {
-    public async Task<AuthResponse> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    private static void ValidatePassword(string password)
+    {
+        var errors = new List<string>();
+        
+        if (password.Length < 8)
+            errors.Add("Password must be at least 8 characters long");
+        if (!password.Any(char.IsUpper))
+            errors.Add("Password must contain at least one uppercase letter");
+        if (!password.Any(char.IsDigit))
+            errors.Add("Password must contain at least one digit");
+        if (password.All(char.IsLetterOrDigit))
+            errors.Add("Password must contain at least one special character");
+        
+        if (errors.Count > 0)
+            throw new ValidationException("Password", string.Join("; ", errors));
+    }
+
+    public async Task<AuthResponse> ExecuteAsync(RegisterUserCommand command, CancellationToken cancellationToken)
     {
         // Check if email already exists
-        if (await authRepository.EmailExistsAsync(request.Email))
+        if (await authRepository.EmailExistsAsync(command.Email))
             throw new ConflictException("Email already registered", "DUPLICATE_EMAIL");
 
         // Validate password
-        ValidatePassword(request.Password);
+        ValidatePassword(command.Password);
         
         // Create user
         var user = new User
         {
             Id = Guid.NewGuid(),
-            Email = request.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Email = command.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(command.Password),
             Status = "active",
             Role = "user"
         };
@@ -39,9 +56,9 @@ public class RegisterUserHandler(IAuthRepository authRepository, IJwtTokenServic
         var profile = new Profile
         {
             UserId = createdUser.Id,
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            DisplayName = $"{request.FirstName} {request.LastName}"
+            FirstName = command.FirstName,
+            LastName = command.LastName,
+            DisplayName = $"{command.FirstName} {command.LastName}"
         };
         
         // TODO: Create profile in database (will move to profile repository)
@@ -60,40 +77,23 @@ public class RegisterUserHandler(IAuthRepository authRepository, IJwtTokenServic
             Email = createdUser.Email
         };
     }
-    
-    private static void ValidatePassword(string password)
-    {
-        var errors = new List<string>();
-        
-        if (password.Length < 8)
-            errors.Add("Password must be at least 8 characters long");
-        if (!password.Any(char.IsUpper))
-            errors.Add("Password must contain at least one uppercase letter");
-        if (!password.Any(char.IsDigit))
-            errors.Add("Password must contain at least one digit");
-        if (password.All(char.IsLetterOrDigit))
-            errors.Add("Password must contain at least one special character");
-        
-        if (errors.Count > 0)
-            throw new ValidationException("Password", string.Join("; ", errors));
-    }
 }
 
 /// <summary>
 /// Handler for user login
 /// </summary>
 public class LoginUserHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
-    : IRequestHandler<LoginUserCommand, AuthResponse>
+    : ICommandHandler<LoginUserCommand, AuthResponse>
 {
-    public async Task<AuthResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
+    public async Task<AuthResponse> ExecuteAsync(LoginUserCommand command, CancellationToken cancellationToken)
     {
         // Get user by email
-        var user = await authRepository.GetUserByEmailAsync(request.Email);
+        var user = await authRepository.GetUserByEmailAsync(command.Email);
         if (user == null)
             throw new UnauthorizedException("Invalid email or password");
         
         // Verify password
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        if (!BCrypt.Net.BCrypt.Verify(command.Password, user.PasswordHash))
             throw new UnauthorizedException("Invalid email or password");
         
         // Check if account is active
@@ -123,12 +123,12 @@ public class LoginUserHandler(IAuthRepository authRepository, IJwtTokenService t
 /// Handler for refreshing access token
 /// </summary>
 public class RefreshTokenHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
-    : IRequestHandler<RefreshTokenCommand, AuthResponse>
+    : ICommandHandler<RefreshTokenCommand, AuthResponse>
 {
     private readonly IAuthRepository _authRepository = authRepository;
     private readonly IJwtTokenService _tokenService = tokenService;
 
-    public async Task<AuthResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+    public Task<AuthResponse> ExecuteAsync(RefreshTokenCommand command, CancellationToken cancellationToken)
     {
         // TODO: Validate refresh token against database
         

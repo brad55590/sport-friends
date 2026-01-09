@@ -1,4 +1,4 @@
-using MediatR;
+using FastEndpoints;
 using SportFriends.Features.Authentication.DTOs;
 
 namespace SportFriends.Features.Authentication.Commands;
@@ -6,7 +6,7 @@ namespace SportFriends.Features.Authentication.Commands;
 /// <summary>
 /// Register new user command
 /// </summary>
-public class RegisterUserCommand : IRequest<AuthResponse>
+public class RegisterUserCommand : ICommand<AuthResponse>
 {
     /// <summary>
     /// User email
@@ -32,7 +32,7 @@ public class RegisterUserCommand : IRequest<AuthResponse>
 /// <summary>
 /// Login user command
 /// </summary>
-public class LoginUserCommand : IRequest<AuthResponse>
+public class LoginUserCommand : ICommand<AuthResponse>
 {
     /// <summary>
     /// User email
@@ -48,7 +48,7 @@ public class LoginUserCommand : IRequest<AuthResponse>
 /// <summary>
 /// Refresh access token command
 /// </summary>
-public class RefreshTokenCommand : IRequest<AuthResponse>
+public class RefreshTokenCommand : ICommand<AuthResponse>
 {
     /// <summary>
     /// Refresh token
