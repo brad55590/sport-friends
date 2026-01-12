@@ -19,6 +19,7 @@ const mockAuthContext: AuthContextType = {
   register: async () => {},
   logout: () => {},
   clearError: () => {},
+  updateProfile: async () => {},
 };
 
 const unauthenticatedContext: AuthContextType = {
@@ -30,6 +31,7 @@ const unauthenticatedContext: AuthContextType = {
   register: async () => {},
   logout: () => {},
   clearError: () => {},
+  updateProfile: async () => {},
 };
 
 describe('ProtectedRoute', () => {

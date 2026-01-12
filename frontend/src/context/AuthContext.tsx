@@ -1,5 +1,11 @@
-import React, { createContext, useReducer, ReactNode, useCallback, useEffect } from 'react';
+import { createContext, useReducer, ReactNode, useCallback, useEffect } from 'react';
 import { apiPost } from '../services/api/client';
+
+export interface Sport {
+  id: string;
+  name: string;
+  icon?: string;
+}
 
 export interface User {
   id: string;
@@ -7,6 +13,15 @@ export interface User {
   firstName: string;
   lastName: string;
   username: string;
+  bio?: string;
+  avatar?: string;
+  sports?: Sport[];
+}
+
+export interface UserProfile extends User {
+  bio: string;
+  avatar: string;
+  sports: Sport[];
 }
 
 export interface AuthContextType {
@@ -18,6 +33,7 @@ export interface AuthContextType {
   register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
+  updateProfile: (profile: Partial<UserProfile>) => Promise<void>;
 }
 
 type AuthAction =
@@ -28,7 +44,11 @@ type AuthAction =
   | { type: 'REGISTER_START' }
   | { type: 'REGISTER_SUCCESS'; payload: User }
   | { type: 'REGISTER_ERROR'; payload: string }
-  | { type: 'CLEAR_ERROR' };
+  | { type: 'UPDATE_PROFILE_START' }
+  | { type: 'UPDATE_PROFILE_SUCCESS'; payload: User }
+  | { type: 'UPDATE_PROFILE_ERROR'; payload: string }
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'RESTORE_SESSION'; payload: User };
 
 interface AuthState {
   user: User | null;
@@ -50,7 +70,11 @@ function loadAuthFromStorage(): AuthState {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      console.log('[Auth] Loaded auth state from localStorage');
+      console.log('[Auth] Loaded auth state from localStorage:', {
+        user: parsed.user?.email,
+        sports: parsed.user?.sports?.length || 0,
+        sportsArray: parsed.user?.sports,
+      });
       return parsed;
     }
   } catch (err) {
@@ -63,7 +87,10 @@ function loadAuthFromStorage(): AuthState {
 function saveAuthToStorage(state: AuthState) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    console.log('[Auth] Saved auth state to localStorage');
+    console.log('[Auth] Saved auth state to localStorage:', {
+      user: state.user?.email,
+      sports: state.user?.sports?.length || 0,
+    });
   } catch (err) {
     console.error('[Auth] Failed to save auth to localStorage:', err);
   }
@@ -109,8 +136,21 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       newState = { ...state, isLoading: false, error: action.payload, user: null };
       clearAuthFromStorage();
       break;
+    case 'UPDATE_PROFILE_START':
+      newState = { ...state, isLoading: true, error: null };
+      break;
+    case 'UPDATE_PROFILE_SUCCESS':
+      newState = { ...state, user: action.payload, isLoading: false, error: null };
+      saveAuthToStorage(newState);
+      break;
+    case 'UPDATE_PROFILE_ERROR':
+      newState = { ...state, isLoading: false, error: action.payload };
+      break;
     case 'CLEAR_ERROR':
       newState = { ...state, error: null };
+      break;
+    case 'RESTORE_SESSION':
+      newState = { ...state, user: action.payload };
       break;
     default:
       return state;
@@ -179,6 +219,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: 'CLEAR_ERROR' });
   }, []);
 
+  const updateProfile = useCallback(async (profile: Partial<UserProfile>) => {
+    dispatch({ type: 'UPDATE_PROFILE_START' });
+    try {
+      const updatedUser = await apiPost<User>('/api/v1/users/profile', profile);
+      dispatch({ type: 'UPDATE_PROFILE_SUCCESS', payload: updatedUser });
+    } catch (err) {
+      dispatch({
+        type: 'UPDATE_PROFILE_ERROR',
+        payload: err instanceof Error ? err.message : 'Failed to update profile',
+      });
+    }
+  }, []);
+
   const value: AuthContextType = {
     user: state.user,
     isAuthenticated: !!state.user,
@@ -188,6 +241,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     logout,
     clearError,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
