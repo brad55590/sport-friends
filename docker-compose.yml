@@ -5,15 +5,18 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: sport-friends-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: sportfriends
       POSTGRES_PASSWORD: dev-password-change-in-prod
       POSTGRES_DB: sportfriends
+      # Create additional user and database
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.utf8"
     ports:
       - "5432:5432"
     volumes:
+      # - ./scripts/docker-init:/docker-entrypoint-initdb.d:ro
       - postgres_data:/var/lib/postgresql/data
-      - ./database/seeds:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sportfriends"]
       interval: 10s
@@ -53,14 +56,14 @@ services:
       # Azure__StorageAccountName: ${AZURE_STORAGE_ACCOUNT_NAME}
       # Azure__StorageAccountKey: ${AZURE_STORAGE_ACCOUNT_KEY}
     ports:
-      - "5000:5000"
+      - "5001:5000"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
+    # volumes:
+    #   - ./backend:/app
     networks:
       - sport-friends-network
     command: dotnet watch run --project SportFriends.API
@@ -78,9 +81,9 @@ services:
       - "5173:5173"
     depends_on:
       - api
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    # volumes:
+    #   - ./frontend:/app
+    #   - /app/node_modules
     networks:
       - sport-friends-network
     command: npm run dev
