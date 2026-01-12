@@ -10,18 +10,38 @@ This project uses a **Podman-first approach**. All services (frontend, backend, 
 
 ### Getting Started
 
-1. **Clone and Setup**
+#### Option 1: Automated Setup (Recommended)
+```bash
+# Runs all setup steps automatically
+./infrastructure/scripts/setup-dev.sh
+```
+
+This will:
+- Verify Podman is installed
+- Create `.env` from template (if needed)
+- Start all containerized services
+- Check service health
+- Display helpful commands
+
+#### Option 2: Build & Start with API Publish
+```bash
+# Publishes the API project then starts services
+./infrastructure/scripts/build-and-start.sh
+```
+
+This will:
+- Publish the SportFriends.API project
+- Start all containerized services
+- Display service URLs and helpful commands
+
+#### Option 3: Manual Start
 ```bash
 cd sport-friends
 cp .env.example .env
-```
-
-2. **Start All Services**
-```bash
 podman-compose up -d
 ```
 
-This will start:
+Services will be available at:
 - **Backend API**: http://localhost:5000
 - **Frontend Web**: http://localhost:5173
 - **PostgreSQL**: localhost:5432
@@ -34,7 +54,12 @@ podman-compose logs -f api    # Backend logs
 podman-compose logs -f web    # Frontend logs
 ```
 
-4. **Stop Services**
+4. **Check API Health**
+```bash
+curl http://localhost:5000/health
+```
+
+5. **Stop Services**
 ```bash
 podman-compose down
 ```

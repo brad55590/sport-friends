@@ -5,23 +5,18 @@
 # # Copy solution and project files
 # COPY . .
 
-# RUN ls -la .
-# RUN dotnet --info
-
 # # Restore, build and publish
 # # Note: using SDK 8.0 in container to avoid QEMU-related crashes on arm64 hosts
 # # Remove global.json temporarily so SDK 8.0 is used (local dev keeps global.json with 10.0)
-# RUN rm global.json
-# # RUN dotnet restore SportFriends.slnx --verbosity detailed
-# RUN dotnet build SportFriends.slnx -c Debug -o /app/build --debug --verbosity detailed
-# # RUN dotnet publish SportFriends.slnx -c Release -o /app/publish --verbosity detaziled
+# # RUN rm global.json
+# RUN dotnet publish SportFriends.slnx -c Release -o /app/publish
 
-# Runtime image
+# # Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble
 
 WORKDIR /app
 
-COPY ./publish/ .
+COPY ./publish .
 # Copy published application from builder
 # COPY --from=builder /app/publish .
 
