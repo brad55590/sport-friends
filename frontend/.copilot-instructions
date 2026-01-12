@@ -1,0 +1,189 @@
+# Frontend Development - Testing Workflow
+
+## REQUIRED: Test-First Development
+
+Every code change must follow this workflow:
+
+### 1️⃣ Before Making Changes
+```bash
+npm run test -- --run
+```
+✅ Verify baseline - all tests pass
+
+### 2️⃣ Write Your Code
+- Implement feature or fix
+- Add tests for new functionality
+- Follow TypeScript/React conventions
+
+### 3️⃣ Run Tests Immediately
+```bash
+npm run test -- --run
+```
+✅ All tests still pass
+❌ If failed: fix code or update tests, then re-run
+
+### 4️⃣ Final Verification
+```bash
+npm run test -- --run && npm run type-check && npm run lint && npm run build
+```
+All 4 must pass ✅ before committing.
+
+---
+
+## Coverage Requirements
+
+| Component Type | Required |
+|---|---|
+| Pages (src/pages/) | 100% |
+| Components (src/components/) | 90%+ |
+| Hooks (src/hooks/) | 95%+ |
+| Context (src/context/) | 100% |
+| Services (src/services/) | 100% |
+| **Overall** | **80%+** |
+
+---
+
+## What Gets Tested
+
+✅ Every page
+✅ Every reusable component  
+✅ Every custom hook
+✅ Every context provider
+✅ Every service/utility function
+✅ All new features
+✅ All bug fixes (regression tests)
+
+---
+
+## Test Locations
+
+- **Test files:** `src/tests/[ComponentName].test.tsx`
+- **Test setup:** `src/tests/setup.ts`
+- **Test utilities:** `src/tests/test-utils.tsx`
+- **API mocking:** `src/mocks/handlers.ts` (MSW handles automatically)
+
+---
+
+## Quick Commands
+
+```bash
+npm run test -- --run              # Run all tests once
+npm run test -- --watch            # Watch mode
+npm run test:coverage              # Coverage report
+npm run test:ui                    # Visual test runner
+npm run test -- LoginPage.test.tsx --run  # Run specific test
+```
+
+---
+
+## Key Testing Principles
+
+✅ **Test user behavior** - Not implementation details
+✅ **Use semantic queries** - getByRole, getByLabelText
+✅ **Mock APIs** - MSW handles automatically
+✅ **Test edge cases** - Errors, loading states, empty states
+✅ **Keep tests focused** - One concept per test
+✅ **Never skip failing tests** - Fix the root cause
+
+---
+
+## Code Quality Principles
+
+✅ **Keep changes minimal** - Only modify what's necessary
+✅ **One feature per commit** - Don't mix unrelated changes
+✅ **No over-engineering** - Simplest solution that works
+✅ **Clean code** - Readable, well-formatted, documented
+✅ **No unnecessary files** - Don't create docs/configs that aren't needed
+✅ **DRY principle** - Don't repeat code, reuse components/utilities
+✅ **Remove dead code** - Delete unused imports, functions, files
+
+---
+
+## Common Patterns
+
+### Testing with Authentication
+```tsx
+import { AuthContext } from '../context/AuthContext';
+
+const mockAuth = {
+  user: { id: '1', email: 'test@example.com', ... },
+  isAuthenticated: true,
+  isLoading: false,
+  error: null,
+  login: vi.fn(),
+  logout: vi.fn(),
+  // ...
+};
+
+render(
+  <AuthContext.Provider value={mockAuth}>
+    <YourComponent />
+  </AuthContext.Provider>
+);
+```
+
+### Testing User Interactions
+```tsx
+const user = userEvent.setup();
+await user.type(screen.getByRole('textbox'), 'input');
+await user.click(screen.getByRole('button', { name: /submit/i }));
+```
+
+### Testing Async Operations
+```tsx
+await waitFor(() => {
+  expect(screen.getByText(/success/i)).toBeInTheDocument();
+});
+```
+
+---
+
+## Troubleshooting
+
+**Tests failing after changes?**
+1. Read the error message - it tells you what's wrong
+2. Did you change code? → Update tests
+3. Did you change tests? → Verify behavior works manually
+4. Is API failing? → Check MSW handlers in `src/mocks/handlers.ts`
+
+**Coverage decreased?**
+- Run `npm run test:coverage` to see what's missing
+- Add tests for new code
+- Never delete tests without removing the feature
+
+**TypeScript errors?**
+- `npm run type-check` shows all errors
+- Check type imports and interfaces
+
+---
+
+## Before Committing
+
+```bash
+npm run test -- --run && npm run type-check && npm run lint && npm run build
+```
+
+All must pass ✅ or commit will be blocked by pre-commit hook.
+
+---
+
+## Git Hook Enforcement
+
+A pre-commit hook automatically runs tests before allowing commits. This ensures:
+- Tests always pass before committing
+- No regressions make it to code review
+- TypeScript and linting checks pass
+- Build succeeds
+
+---
+
+## Questions?
+
+- Check existing tests for examples
+- Run `npm run test:ui` for visual debugging
+- Review test-utils.tsx for rendering helpers
+- Check MSW handlers for mocking examples
+
+---
+
+**Remember:** Tests prevent bugs before users see them. Embrace them! 🧪

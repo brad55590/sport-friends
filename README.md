@@ -72,15 +72,22 @@ podman-compose down
 React 18 + TypeScript + Vite web application
 - Automatic hot-reload during development
 - API client with proper typing
-- Unit tests with Vitest
+- Comprehensive unit tests with Vitest
+- Mock Service Worker (MSW) for API mocking
+- React Context for state management
+- Material-UI for component library
 
-**Commands (inside container)**:
+**Commands**:
 ```bash
-npm run dev       # Development server
+npm run dev       # Development server (http://localhost:5173)
 npm run build     # Production build
 npm run lint      # Linting
-npm test          # Run tests
+npm run test      # Run tests
+npm run test:coverage  # Generate coverage report
 ```
+
+**Testing Guidelines**: See [frontend/TESTING-GUIDELINES.md](frontend/TESTING-GUIDELINES.md)
+**Copilot Instructions**: See [frontend/.copilot-instructions](frontend/.copilot-instructions)
 
 ### `/backend`
 ASP.NET Core 8.0 REST API
