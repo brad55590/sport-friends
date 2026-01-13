@@ -11,7 +11,10 @@ import {
   Divider,
   Chip,
   Autocomplete,
+  Avatar,
+  IconButton,
 } from '@mui/material';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { useAuth } from '../hooks/useAuth';
 import { Sport } from '../context/AuthContext';
 
@@ -124,6 +127,21 @@ export function ProfilePage() {
     });
   };
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData({
+          ...formData,
+          avatar: base64String,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSportChange = (sportId: string) => {
     setSelectedSports(prev =>
       prev.includes(sportId)
@@ -206,6 +224,49 @@ export function ProfilePage() {
           )}
 
           <Box component="form" onSubmit={handleSubmit}>
+            {/* Profile Picture Section */}
+            <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <Avatar
+                sx={{
+                  width: 120,
+                  height: 120,
+                  bgcolor: 'primary.main',
+                  fontSize: '3rem',
+                }}
+                src={formData.avatar}
+              >
+                {!formData.avatar && (
+                  <>
+                    {user?.firstName?.charAt(0).toUpperCase()}
+                    {user?.lastName?.charAt(0).toUpperCase()}
+                  </>
+                )}
+              </Avatar>
+              <Box sx={{ position: 'relative' }}>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="avatar-input"
+                  type="file"
+                  onChange={handleAvatarChange}
+                  disabled={isLoading}
+                />
+                <label htmlFor="avatar-input">
+                  <IconButton
+                    color="primary"
+                    aria-label="upload picture"
+                    component="span"
+                    disabled={isLoading}
+                  >
+                    <CameraAltIcon />
+                  </IconButton>
+                </label>
+              </Box>
+              <Typography variant="caption" color="textSecondary">
+                Click the camera icon to upload a profile picture
+              </Typography>
+            </Box>
+
             {/* Personal Information */}
             <Typography variant="h6" sx={{ mb: 2, mt: 3 }}>
               Personal Information
