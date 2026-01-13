@@ -15,6 +15,9 @@ export interface User {
   username: string;
   bio?: string;
   avatar?: string;
+  area?: string;
+  latitude?: number;
+  longitude?: number;
   sports?: Sport[];
 }
 

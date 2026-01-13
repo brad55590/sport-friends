@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Container,
   Paper,
@@ -8,28 +8,42 @@ import {
   Box,
   Alert,
   CircularProgress,
-  Divider,
   Chip,
   Autocomplete,
   Avatar,
   IconButton,
+  Stack,
+  Card,
+  CardContent,
 } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import SaveIcon from '@mui/icons-material/Save';
 import { useAuth } from '../hooks/useAuth';
 import { Sport } from '../context/AuthContext';
 
 export function ProfilePage() {
   const { user, updateProfile, isLoading, error, clearError } = useAuth();
   const [formData, setFormData] = useState({
+    email: '',
+    username: '',
     firstName: '',
     lastName: '',
     bio: '',
+    area: '',
+    latitude: 0,
+    longitude: 0,
     avatar: '',
   });
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [availableSports, setAvailableSports] = useState<Sport[]>([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [sportSearch, setSportSearch] = useState('');
+  const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
+  const [locationOptions, setLocationOptions] = useState<Array<{ name: string; lat: number; lng: number }>>([]);
+  const [locationSearch, setLocationSearch] = useState('');
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
+  const locationSearchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize form with user data
   useEffect(() => {
@@ -40,9 +54,14 @@ export function ProfilePage() {
         sportsArray: user.sports,
       });
       setFormData({
+        email: user.email || '',
+        username: user.username || '',
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         bio: user.bio || '',
+        area: user.area || '',
+        latitude: user.latitude || 0,
+        longitude: user.longitude || 0,
         avatar: user.avatar || '',
       });
       // Ensure selectedSports is updated with current user sports
@@ -53,9 +72,14 @@ export function ProfilePage() {
       // Reset form when user is not loaded
       console.log('[ProfilePage] User not loaded, resetting form');
       setFormData({
+        email: '',
+        username: '',
         firstName: '',
         lastName: '',
         bio: '',
+        area: '',
+        latitude: 0,
+        longitude: 0,
         avatar: '',
       });
       setSelectedSports([]);
@@ -142,6 +166,83 @@ export function ProfilePage() {
     }
   };
 
+  const handleGetLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setFormData({
+            ...formData,
+            latitude,
+            longitude,
+          });
+          console.log('[ProfilePage] Location obtained:', { latitude, longitude });
+        },
+        (error) => {
+          console.error('[ProfilePage] Geolocation error:', error);
+          alert('Unable to get your location. Please check your browser permissions.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
+    }
+  };
+
+  const handleLocationSearch = async (query: string) => {
+    setLocationSearch(query);
+    
+    // Clear any pending search timeout
+    if (locationSearchTimeoutRef.current) {
+      clearTimeout(locationSearchTimeoutRef.current);
+    }
+    
+    if (query.length < 3) {
+      setLocationOptions([]);
+      return;
+    }
+
+    // Set a debounce delay before searching (500ms)
+    locationSearchTimeoutRef.current = setTimeout(async () => {
+      setIsSearchingLocation(true);
+      try {
+        // Using OpenStreetMap Nominatim API (free, no API key required)
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+        );
+        const results = await response.json();
+        
+        const options = results.map((result: any) => ({
+          name: result.display_name,
+          lat: parseFloat(result.lat),
+          lng: parseFloat(result.lon),
+        }));
+        
+        setLocationOptions(options);
+        console.log('[ProfilePage] Location search results:', options);
+      } catch (error) {
+        console.error('[ProfilePage] Location search error:', error);
+        setLocationOptions([]);
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 500); // 500ms debounce delay
+  };
+
+  const handleLocationSelect = (location: { name: string; lat: number; lng: number } | null) => {
+    if (!location) return;
+    
+    setFormData({
+      ...formData,
+      area: location.name,
+      latitude: location.lat,
+      longitude: location.lng,
+    });
+    setSelectedLocation(null);
+    setLocationSearch('');
+    setLocationOptions([]);
+    console.log('[ProfilePage] Location selected:', location);
+  };
+
   const handleSportChange = (sportId: string) => {
     setSelectedSports(prev =>
       prev.includes(sportId)
@@ -204,34 +305,42 @@ export function ProfilePage() {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 4, mb: 4 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography component="h1" variant="h4" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
-            My Profile
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Box sx={{ maxWidth: 700, mx: 'auto' }}>
+        {/* Header */}
+        <Box sx={{ mb: 4, textAlign: 'center' }}>
+          <Typography component="h1" variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+            Edit Profile
           </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Update your profile information and preferences
+          </Typography>
+        </Box>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+        {/* Alerts */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-          {successMessage && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              {successMessage}
-            </Alert>
-          )}
+        {successMessage && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {successMessage}
+          </Alert>
+        )}
 
-          <Box component="form" onSubmit={handleSubmit}>
-            {/* Profile Picture Section */}
-            <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+        <Box component="form" onSubmit={handleSubmit}>
+          {/* Avatar Section */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 4 }}>
               <Avatar
                 sx={{
-                  width: 120,
-                  height: 120,
+                  width: 100,
+                  height: 100,
                   bgcolor: 'primary.main',
-                  fontSize: '3rem',
+                  fontSize: '2.5rem',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 }}
                 src={formData.avatar}
               >
@@ -242,7 +351,7 @@ export function ProfilePage() {
                   </>
                 )}
               </Avatar>
-              <Box sx={{ position: 'relative' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <input
                   accept="image/*"
                   style={{ display: 'none' }}
@@ -257,131 +366,242 @@ export function ProfilePage() {
                     aria-label="upload picture"
                     component="span"
                     disabled={isLoading}
+                    size="small"
                   >
                     <CameraAltIcon />
                   </IconButton>
                 </label>
+                <Typography variant="caption" color="text.secondary">
+                  Change photo
+                </Typography>
               </Box>
-              <Typography variant="caption" color="textSecondary">
-                Click the camera icon to upload a profile picture
+            </CardContent>
+          </Card>
+
+          {/* Personal Information Section */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Personal Information
               </Typography>
-            </Box>
+              <Stack spacing={2}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  size="small"
+                />
 
-            {/* Personal Information */}
-            <Typography variant="h6" sx={{ mb: 2, mt: 3 }}>
-              Personal Information
-            </Typography>
+                <TextField
+                  required
+                  fullWidth
+                  label="Username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  size="small"
+                  helperText="Your unique SportFriends username"
+                />
 
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="First Name"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
-
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="Last Name"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
-
-            <TextField
-              margin="normal"
-              fullWidth
-              multiline
-              rows={4}
-              label="Bio"
-              name="bio"
-              placeholder="Tell other sports friends about yourself"
-              value={formData.bio}
-              onChange={handleChange}
-              disabled={isLoading}
-              helperText="Write a short bio about yourself (max 500 characters)"
-            />
-
-            {/* Sports Interests */}
-            <Box sx={{ mt: 4, mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Sports Interests
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-
-              {/* Selected Sports */}
-              {selectedSports.length > 0 && (
-                <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {getSelectedSportNames().map(sportName => (
-                    <Chip
-                      key={sportName}
-                      label={sportName}
-                      onDelete={() => {
-                        const sportId = availableSports.find(s => s.name === sportName)?.id;
-                        if (sportId) handleSportChange(sportId);
-                      }}
-                      color="primary"
-                      variant="outlined"
-                      disabled={isLoading}
-                    />
-                  ))}
-                </Box>
-              )}
-
-              {/* Sports Autocomplete Dropdown */}
-              <Autocomplete
-                disabled={isLoading}
-                options={filteredSports}
-                getOptionLabel={(option) => option.name}
-                inputValue={sportSearch}
-                onInputChange={(_, value) => setSportSearch(value)}
-                onChange={(_, value) => {
-                  if (value) {
-                    handleSportChange(value.id);
-                    setSportSearch(''); // Clear search after selection
-                  }
-                }}
-                noOptionsText={
-                  sportSearch.length < 3
-                    ? 'Type at least 3 characters to search'
-                    : 'No sports found'
-                }
-                renderInput={(params) => (
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                   <TextField
-                    {...params}
-                    placeholder="Search sports (min 3 characters)..."
+                    required
                     fullWidth
+                    label="First Name"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    size="small"
                   />
-                )}
-                filterOptions={(options) => {
-                  // Only filter if we have 3+ characters
-                  if (sportSearch.length < 3) {
-                    return [];
-                  }
-                  return options.filter(option =>
-                    option.name.toLowerCase().includes(sportSearch.toLowerCase())
-                  );
-                }}
-              />
-            </Box>
 
+                  <TextField
+                    required
+                    fullWidth
+                    label="Last Name"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    size="small"
+                  />
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          {/* Location Section */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                📍 Location
+              </Typography>
+              <Stack spacing={2}>
+                <Autocomplete
+                  options={locationOptions}
+                  getOptionLabel={(option) => option.name}
+                  loading={isSearchingLocation}
+                  value={selectedLocation}
+                  inputValue={locationSearch}
+                  onInputChange={(_, value, reason) => {
+                    if (reason === 'input') {
+                      handleLocationSearch(value);
+                    }
+                  }}
+                  onChange={(_, value) => handleLocationSelect(value)}
+                  noOptionsText={
+                    locationSearch.length < 3
+                      ? 'Type at least 3 characters to search'
+                      : 'No locations found'
+                  }
+                  filterOptions={(options) => options}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Search Location"
+                      placeholder="e.g., San Francisco, CA"
+                      fullWidth
+                      size="small"
+                      helperText="Search your city or region for exact coordinates"
+                    />
+                  )}
+                />
+
+                {/* Display Selected Location Coordinates */}
+                {(formData.latitude !== 0 || formData.longitude !== 0) && (
+                  <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 1, border: '1px solid', borderColor: 'success.light' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.dark', mb: 0.5 }}>
+                      ✓ Location Confirmed
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+                      {formData.area}
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.75rem' }}>
+                      {formData.latitude?.toFixed(4)}, {formData.longitude?.toFixed(4)}
+                    </Typography>
+                  </Box>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+
+          {/* Sports Section */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                ⚽ Sports Interests
+              </Typography>
+              <Stack spacing={2}>
+                {/* Selected Sports Chips */}
+                {selectedSports.length > 0 && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                      Selected ({selectedSports.length})
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {getSelectedSportNames().map(sportName => (
+                        <Chip
+                          key={sportName}
+                          label={sportName}
+                          onDelete={() => {
+                            const sportId = availableSports.find(s => s.name === sportName)?.id;
+                            if (sportId) handleSportChange(sportId);
+                          }}
+                          color="primary"
+                          variant="filled"
+                          disabled={isLoading}
+                          size="small"
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Sports Autocomplete Dropdown */}
+                <Autocomplete
+                  disabled={isLoading}
+                  options={filteredSports}
+                  getOptionLabel={(option) => option.name}
+                  value={selectedSport}
+                  inputValue={sportSearch}
+                  onInputChange={(_, value) => setSportSearch(value)}
+                  onChange={(_, value) => {
+                    if (value) {
+                      handleSportChange(value.id);
+                      setSportSearch('');
+                      setSelectedSport(null);
+                    }
+                  }}
+                  noOptionsText={
+                    sportSearch.length < 3
+                      ? 'Type at least 3 characters to search'
+                      : 'No sports found'
+                  }
+                  filterOptions={(options) => {
+                    if (sportSearch.length < 3) {
+                      return [];
+                    }
+                    return options.filter(option =>
+                      option.name.toLowerCase().includes(sportSearch.toLowerCase())
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Add Sports"
+                      placeholder="Search to add more sports..."
+                      fullWidth
+                      size="small"
+                      helperText="Search for sports you enjoy (min 3 characters)"
+                    />
+                  )}
+                />
+              </Stack>
+            </CardContent>
+          </Card>
+
+          {/* Bio Section */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                About You
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                label="Bio"
+                name="bio"
+                placeholder="Tell other sports enthusiasts about yourself..."
+                value={formData.bio}
+                onChange={handleChange}
+                disabled={isLoading}
+                helperText="Write a short bio to help others get to know you (max 500 characters)"
+                size="small"
+              />
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
             <Button
               type="submit"
-              fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              size="large"
+              startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
               disabled={isLoading}
+              sx={{ minWidth: 200 }}
             >
-              {isLoading ? <CircularProgress size={24} /> : 'Save Profile'}
+              {isLoading ? 'Saving...' : 'Save Profile'}
             </Button>
           </Box>
-        </Paper>
+        </Box>
       </Box>
     </Container>
   );
