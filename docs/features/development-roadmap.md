@@ -83,13 +83,13 @@ This roadmap outlines the development plan for SportFriends from initial concept
 - [ ] Write unit tests (80% coverage target)
 
 **Frontend Tasks**:
-- [ ] Create registration page/form
-- [ ] Create login page/form
-- [ ] Implement JWT token management
+- [x] Create registration page/form
+- [x] Create login page/form
+- [x] Implement JWT token management
 - [ ] Create profile creation wizard (multi-step)
-- [ ] Create profile edit page
-- [ ] Implement avatar upload with preview
-- [ ] Create sport selection component
+- [x] Create profile edit page
+- [x] Implement avatar upload with preview
+- [x] Create sport selection component
 - [ ] Create interest selection component (tag input)
 - [ ] Implement form validation
 - [ ] Create protected route wrapper

@@ -1,18 +1,6 @@
-// Get the API base URL from environment or use localhost
-const getApiUrl = (): string => {
-  const envUrl = import.meta.env.VITE_API_URL;
-  console.log('[API Client] Environment VITE_API_URL:', envUrl);
-  
-  if (envUrl) {
-    return envUrl;
-  }
-  // Default to localhost:5000 for development
-  console.log('[API Client] Using default localhost:5000');
-  return 'http://localhost:5000';
-};
+import { API_BASE_URL, shouldUseMocks } from './config';
 
-export const API_BASE_URL = getApiUrl();
-console.log('[API Client] API_BASE_URL set to:', API_BASE_URL);
+const TOKEN_STORAGE_KEY = 'sportfriends_token';
 
 export interface ApiResponse<T> {
   data?: T;
@@ -24,15 +12,34 @@ export async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<Response> {
+  const useMocks = shouldUseMocks();
   const url = `${API_BASE_URL}${endpoint}`;
-  console.log(`[API] ${options.method || 'GET'} ${url}`);
+  const method = options.method || 'GET';
+  
+  console.log(`[API] ${useMocks ? '(MOCK) ' : ''}${method} ${url}`);
 
   try {
+    // Get token from localStorage for Authorization header
+    let token: string | null = null;
+    try {
+      token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    } catch (e) {
+      console.warn('[API] Unable to read token from localStorage');
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string>),
+    };
+
+    // Add Authorization header if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      console.log('[API] Added Authorization header');
+    }
+
     const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       ...options,
     });
 
@@ -64,6 +71,23 @@ export async function apiPost<T>(
 export async function apiGet<T>(endpoint: string): Promise<T> {
   const response = await apiCall(endpoint, {
     method: 'GET',
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || 'API request failed');
+  }
+
+  return response.json();
+}
+
+export async function apiPut<T>(
+  endpoint: string,
+  data?: Record<string, any>
+): Promise<T> {
+  const response = await apiCall(endpoint, {
+    method: 'PUT',
+    body: data ? JSON.stringify(data) : undefined,
   });
 
   if (!response.ok) {

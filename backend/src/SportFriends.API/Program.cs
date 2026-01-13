@@ -21,7 +21,7 @@ if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Lo
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "your-secret-key-must-be-at-least-32-characters-long";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "sportfriends-api";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "sportfriends-app";
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Server=localhost;Port=5432;Database=sportfriends;User Id=sportfriends;Password=password;";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Server=localhost;Port=5432;Database=sportfriends;User Id=sportfriends;Password=dev-password-change-in-prod;";
 
 // Add services
 builder.Services.AddFastEndpoints();
@@ -58,7 +58,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://localhost:7237", "http://localhost:5016")
+        policy.WithOrigins("https://localhost:7237", "http://localhost:5016", "http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -67,6 +67,8 @@ builder.Services.AddCors(options =>
 
 // Add repositories and services
 builder.Services.AddScoped<IAuthRepository>(_ => new AuthRepository(connectionString));
+builder.Services.AddScoped<IProfileRepository>(_ => new ProfileRepository(connectionString));
+builder.Services.AddScoped<ISportsRepository>(_ => new SportsRepository(connectionString));
 builder.Services.AddScoped<IJwtTokenService>(_ => new JwtTokenService(jwtSecret, jwtIssuer, jwtAudience));
 
 var app = builder.Build();

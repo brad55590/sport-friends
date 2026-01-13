@@ -8,7 +8,7 @@ dotnet publish src/SportFriends.API/SportFriends.API.csproj -c Release -o ./publ
 cd ..
 
 echo "🐳 Starting Podman Compose services..."
-podman-compose up -d
+podman-compose up -d --build
 
 echo "✅ Build and start complete!"
 echo ""

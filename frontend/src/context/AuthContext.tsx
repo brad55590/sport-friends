@@ -1,5 +1,14 @@
 import { createContext, useReducer, ReactNode, useCallback, useEffect } from 'react';
-import { apiPost } from '../services/api/client';
+import { apiPost, apiPut } from '../services/api/client';
+
+const TOKEN_STORAGE_KEY = 'sportfriends_token';
+
+// Helper to set auth header for subsequent requests
+function setupAuthHeader(token: string) {
+  // This could be used to configure axios/fetch interceptors if needed
+  // For now, the token is stored and read by the client on each request
+  console.log('[Auth] Token setup for header:', token.substring(0, 20) + '...');
+}
 
 export interface Sport {
   id: string;
@@ -183,7 +192,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = useCallback(async (email: string, password: string) => {
     dispatch({ type: 'LOGIN_START' });
     try {
-      const user = await apiPost<User>('/api/v1/auth/login', { email, password });
+      // Call real API endpoint
+      const response = await apiPost<any>('/api/v1/auth/login', { email, password });
+      
+      // Extract token and user data from response (wrapped in data property)
+      const userData = response.data || response;
+      const accessToken = userData.accessToken;
+      const user: User = {
+        id: userData.id || '',
+        email: userData.email || email,
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        username: userData.username || email,
+      };
+      
+      // Save token to localStorage
+      if (accessToken) {
+        localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
+        // Add token to future requests
+        setupAuthHeader(accessToken);
+      }
+      
       dispatch({ type: 'LOGIN_SUCCESS', payload: user });
     } catch (err) {
       dispatch({
@@ -197,12 +226,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
     async (email: string, password: string, firstName: string, lastName: string) => {
       dispatch({ type: 'REGISTER_START' });
       try {
-        const user = await apiPost<User>('/api/v1/auth/register', {
+        // Call real API endpoint
+        const response = await apiPost<any>('/api/v1/auth/register', {
           email,
           password,
+          confirmPassword: password,
           firstName,
           lastName,
         });
+        
+        // Extract token and user data from response (wrapped in data property)
+        const userData = response.data || response;
+        const accessToken = userData.accessToken;
+        const user: User = {
+          id: userData.id || '',
+          email: userData.email || email,
+          firstName: userData.firstName || firstName,
+          lastName: userData.lastName || lastName,
+          username: userData.username || email,
+        };
+        
+        // Save token to localStorage
+        if (accessToken) {
+          localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
+          // Add token to future requests
+          setupAuthHeader(accessToken);
+        }
+        
         dispatch({ type: 'REGISTER_SUCCESS', payload: user });
       } catch (err) {
         dispatch({
@@ -225,7 +275,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const updateProfile = useCallback(async (profile: Partial<UserProfile>) => {
     dispatch({ type: 'UPDATE_PROFILE_START' });
     try {
-      const updatedUser = await apiPost<User>('/api/v1/users/profile', profile);
+      // Call real API endpoint with PUT
+      const response = await apiPut<any>('/api/v1/users/profile', profile);
+      
+      // Extract user data from response
+      const updatedUser: User = {
+        id: response.id || state.user?.id || '',
+        email: response.email || state.user?.email || '',
+        firstName: response.firstName || profile.firstName || state.user?.firstName || '',
+        lastName: response.lastName || profile.lastName || state.user?.lastName || '',
+        username: response.username || state.user?.username || '',
+        bio: response.bio,
+        avatar: response.avatar,
+        sports: response.sports,
+      };
+      
       dispatch({ type: 'UPDATE_PROFILE_SUCCESS', payload: updatedUser });
     } catch (err) {
       dispatch({
@@ -233,7 +297,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         payload: err instanceof Error ? err.message : 'Failed to update profile',
       });
     }
-  }, []);
+  }, [state.user]);
 
   const value: AuthContextType = {
     user: state.user,
