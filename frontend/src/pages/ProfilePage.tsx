@@ -101,7 +101,7 @@ export function ProfilePage() {
           { id: '10', name: 'Cycling' },
           { id: '11', name: 'Yoga' },
           { id: '12', name: 'Pilates' },
-          { id: '13', name: 'Boxing' },çç
+          { id: '13', name: 'Boxing' },
           { id: '14', name: 'Martial Arts' },
           { id: '15', name: 'Surfing' },
           { id: '16', name: 'Skiing' },
