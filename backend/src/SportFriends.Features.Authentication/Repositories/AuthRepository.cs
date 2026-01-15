@@ -42,19 +42,19 @@ public class AuthRepository(string connectionString) : IAuthRepository
 
         const string sql = """
                            SELECT 
-                               id,
-                               email,
-                               email_verified,
-                               email_verification_token,
-                               email_verification_expires,
-                               password_hash,
-                               phone,
-                               phone_verified,
-                               status,
-                               role,
-                               last_login_at,
-                               created_at,
-                               updated_at
+                               id AS Id,
+                               email AS Email,
+                               email_verified AS EmailVerified,
+                               email_verification_token AS EmailVerificationToken,
+                               email_verification_expires AS EmailVerificationExpires,
+                               password_hash AS PasswordHash,
+                               phone AS Phone,
+                               phone_verified AS PhoneVerified,
+                               status AS Status,
+                               role AS Role,
+                               last_login_at AS LastLoginAt,
+                               created_at AS CreatedAt,
+                               updated_at AS UpdatedAt
                            FROM users
                            WHERE email = @Email
                            LIMIT 1
@@ -90,7 +90,20 @@ public class AuthRepository(string connectionString) : IAuthRepository
                                  @CreatedAt,
                                  @UpdatedAt
                                )
-                           RETURNING *
+                           RETURNING 
+                               id AS Id,
+                               email AS Email,
+                               email_verified AS EmailVerified,
+                               email_verification_token AS EmailVerificationToken,
+                               email_verification_expires AS EmailVerificationExpires,
+                               password_hash AS PasswordHash,
+                               phone AS Phone,
+                               phone_verified AS PhoneVerified,
+                               status AS Status,
+                               role AS Role,
+                               last_login_at AS LastLoginAt,
+                               created_at AS CreatedAt,
+                               updated_at AS UpdatedAt
                            """;
 
         var result = await connection.QuerySingleAsync<User>(sql, new

@@ -11,7 +11,7 @@ namespace SportFriends.Features.Authentication.Handlers;
 /// <summary>
 /// Handler for registering a new user
 /// </summary>
-public class RegisterUserHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
+public class RegisterUserHandler(IAuthRepository authRepository, IProfileRepository profileRepository, IJwtTokenService tokenService)
     : ICommandHandler<RegisterUserCommand, AuthResponse>
 {
     private static void ValidatePassword(string password)
@@ -55,13 +55,16 @@ public class RegisterUserHandler(IAuthRepository authRepository, IJwtTokenServic
         // Create profile
         var profile = new Profile
         {
+            Id = Guid.NewGuid(),
             UserId = createdUser.Id,
             FirstName = command.FirstName,
             LastName = command.LastName,
-            DisplayName = $"{command.FirstName} {command.LastName}"
+            DisplayName = $"{command.FirstName} {command.LastName}",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
-        // TODO: Create profile in database (will move to profile repository)
+        await profileRepository.CreateProfileAsync(profile);
 
         // Generate tokens
         var accessToken = tokenService.GenerateAccessToken(createdUser);
@@ -74,7 +77,11 @@ public class RegisterUserHandler(IAuthRepository authRepository, IJwtTokenServic
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             UserId = createdUser.Id,
-            Email = createdUser.Email
+            Email = createdUser.Email,
+            FirstName = command.FirstName,
+            LastName = command.LastName,
+            Username = command.Email.Split('@')[0],
+            Sports = []
         };
     }
 }
@@ -82,7 +89,7 @@ public class RegisterUserHandler(IAuthRepository authRepository, IJwtTokenServic
 /// <summary>
 /// Handler for user login
 /// </summary>
-public class LoginUserHandler(IAuthRepository authRepository, IJwtTokenService tokenService)
+public class LoginUserHandler(IAuthRepository authRepository, IProfileRepository profileRepository, IJwtTokenService tokenService)
     : ICommandHandler<LoginUserCommand, AuthResponse>
 {
     public async Task<AuthResponse> ExecuteAsync(LoginUserCommand command, CancellationToken cancellationToken)
@@ -103,6 +110,9 @@ public class LoginUserHandler(IAuthRepository authRepository, IJwtTokenService t
         // Update last login
         await authRepository.UpdateLastLoginAsync(user.Id);
 
+        // Get profile with details (includes sports)
+        var profile = await profileRepository.GetProfileWithDetailsAsync(user.Id);
+
         // Generate tokens
         var accessToken = tokenService.GenerateAccessToken(user);
         var refreshToken = tokenService.GenerateRefreshToken();
@@ -114,7 +124,16 @@ public class LoginUserHandler(IAuthRepository authRepository, IJwtTokenService t
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             UserId = user.Id,
-            Email = user.Email
+            Email = user.Email,
+            FirstName = profile?.FirstName,
+            LastName = profile?.LastName,
+            Username = profile?.Username ?? user.Email.Split('@')[0],
+            Bio = profile?.Bio,
+            Avatar = profile?.Avatar,
+            Area = profile?.Area,
+            Latitude = profile?.Latitude,
+            Longitude = profile?.Longitude,
+            Sports = profile?.Sports ?? []
         };
     }
 }

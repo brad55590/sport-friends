@@ -1,21 +1,57 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
-  TextField,
-  Button,
   Typography,
   Box,
-  Alert,
-  CircularProgress,
+  Button,
+  Stack,
+  Divider,
 } from '@mui/material';
 import { useAuth } from '../hooks/useAuth';
+import { useError } from '../hooks/useError';
+import { FormField } from '../components/forms/FormField';
+import { PasswordField } from '../components/forms/PasswordField';
+import { SubmitButton } from '../components/forms/SubmitButton';
+import {
+  validateEmail,
+  validatePassword,
+  validatePasswordMatch,
+  validateName,
+} from '../utils/validation';
+
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+interface FormErrors {
+  firstName: string[];
+  lastName: string[];
+  email: string[];
+  password: string[];
+  confirmPassword: string[];
+}
+
+const initialFormErrors: FormErrors = {
+  firstName: [],
+  lastName: [],
+  email: [],
+  password: [],
+  confirmPassword: [],
+};
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const { register, isLoading, error, clearError } = useAuth();
-  const [formData, setFormData] = useState({
+  const { register, isLoading, error, clearError, user } = useAuth();
+  const { addError } = useError();
+  const registrationSuccessfulRef = useRef(false);
+
+  const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
     email: '',
@@ -23,125 +59,267 @@ export function RegisterPage() {
     confirmPassword: '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const [formErrors, setFormErrors] = useState<FormErrors>(initialFormErrors);
+
+  // Clear error when component mounts
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
+
+  // Navigate to dashboard only after successful registration
+  useEffect(() => {
+    if (registrationSuccessfulRef.current && user && !isLoading && !error) {
+      navigate('/dashboard');
+    }
+  }, [user, isLoading, error, navigate]);
+
+  // Display error from auth context in error component
+  useEffect(() => {
+    if (error) {
+      addError(error, 'error');
+    }
+  }, [error, addError]);
+
+  const handleFieldChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear field error when user starts typing
+    if (formErrors[name as keyof FormErrors].length > 0) {
+      setFormErrors((prev) => ({
+        ...prev,
+        [name]: [],
+      }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = { ...initialFormErrors };
+    let isValid = true;
+
+    // Validate first name
+    const firstNameValidation = validateName(formData.firstName, 'First name');
+    if (!firstNameValidation.isValid) {
+      newErrors.firstName = firstNameValidation.errors;
+      isValid = false;
+    }
+
+    // Validate last name
+    const lastNameValidation = validateName(formData.lastName, 'Last name');
+    if (!lastNameValidation.isValid) {
+      newErrors.lastName = lastNameValidation.errors;
+      isValid = false;
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      newErrors.email = emailValidation.errors;
+      isValid = false;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.isValid) {
+      newErrors.password = passwordValidation.errors;
+      isValid = false;
+    }
+
+    // Validate password match
+    const passwordMatchValidation = validatePasswordMatch(
+      formData.password,
+      formData.confirmPassword
+    );
+    if (!passwordMatchValidation.isValid) {
+      newErrors.confirmPassword = passwordMatchValidation.errors;
+      isValid = false;
+    }
+
+    setFormErrors(newErrors);
+    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
 
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+    if (!validateForm()) {
       return;
     }
 
     try {
-      await register(formData.email, formData.password, formData.firstName, formData.lastName);
-      navigate('/dashboard');
+      registrationSuccessfulRef.current = false;
+      await register(
+        formData.email,
+        formData.password,
+        formData.firstName,
+        formData.lastName
+      );
+      registrationSuccessfulRef.current = true;
     } catch (err) {
-      // Error is handled by context
+      registrationSuccessfulRef.current = false;
+      // Error is already handled by the error context via useEffect
     }
   };
 
+  const isFormValid =
+    formData.firstName &&
+    formData.lastName &&
+    formData.email &&
+    formData.password &&
+    formData.confirmPassword &&
+    Object.values(formErrors).every((errors) => errors.length === 0);
+
   return (
     <Container maxWidth="sm">
-      <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box
+        sx={{
+          mt: 8,
+          mb: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          <Typography component="h1" variant="h4" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
-            SportFriends
-          </Typography>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 3, textAlign: 'center' }}>
-            Create a new account
-          </Typography>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          <Box component="form" onSubmit={handleSubmit}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="First Name"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="Last Name"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="Email Address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="confirmPassword"
-              label="Confirm Password"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={isLoading}
+          {/* Header */}
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Typography
+              component="h1"
+              variant="h4"
+              sx={{ mb: 1, fontWeight: 'bold' }}
             >
-              {isLoading ? <CircularProgress size={24} /> : 'Sign Up'}
-            </Button>
+              SportFriends
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              Create your account
+            </Typography>
+          </Box>
 
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <Typography variant="body2">
-                Already have an account?{' '}
-                <Button
-                  color="primary"
-                  sx={{ textTransform: 'none' }}
-                  onClick={() => navigate('/login')}
+          {/* API Error Alert */}
+          {/* Registration Form */}
+          <Box component="form" onSubmit={handleSubmit}>
+            <Stack spacing={2.5}>
+              {/* Personal Information Section */}
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
                 >
-                  Sign In
-                </Button>
-              </Typography>
-            </Box>
+                  Personal Information
+                </Typography>
+                <Stack spacing={2}>
+                  <FormField
+                    label="First Name"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleFieldChange}
+                    errors={formErrors.firstName}
+                    disabled={isLoading}
+                    placeholder="John"
+                    autoComplete="given-name"
+                  />
+                  <FormField
+                    label="Last Name"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleFieldChange}
+                    errors={formErrors.lastName}
+                    disabled={isLoading}
+                    placeholder="Doe"
+                    autoComplete="family-name"
+                  />
+                </Stack>
+              </Box>
+
+              <Divider />
+
+              {/* Email Section */}
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
+                >
+                  Email
+                </Typography>
+                <FormField
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleFieldChange}
+                  errors={formErrors.email}
+                  disabled={isLoading}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                />
+              </Box>
+
+              <Divider />
+
+              {/* Password Section */}
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
+                >
+                  Password
+                </Typography>
+                <Stack spacing={2}>
+                  <PasswordField
+                    label="Password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleFieldChange}
+                    errors={formErrors.password}
+                    disabled={isLoading}
+                    showStrengthIndicator={true}
+                  />
+                  <PasswordField
+                    label="Confirm Password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleFieldChange}
+                    errors={formErrors.confirmPassword}
+                    disabled={isLoading}
+                    showStrengthIndicator={false}
+                  />
+                </Stack>
+              </Box>
+
+              {/* Submit Button */}
+              <SubmitButton
+                isLoading={isLoading}
+                disabled={!isFormValid}
+                sx={{ mt: 1 }}
+              >
+                Create Account
+              </SubmitButton>
+
+              {/* Sign In Link */}
+              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Already have an account?{' '}
+                  <Button
+                    color="primary"
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      p: 0,
+                      ml: 0.5,
+                    }}
+                    onClick={() => navigate('/login')}
+                  >
+                    Sign In
+                  </Button>
+                </Typography>
+              </Box>
+            </Stack>
           </Box>
         </Paper>
       </Box>

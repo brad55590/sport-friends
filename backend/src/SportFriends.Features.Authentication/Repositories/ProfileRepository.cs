@@ -63,33 +63,33 @@ public class ProfileRepository(string connectionString) : IProfileRepository
 
         const string sql = """
                            SELECT 
-                               id,
-                               user_id,
-                               first_name,
-                               last_name,
-                               display_name,
-                               bio,
-                               avatar_url,
-                               cover_image_url,
-                               date_of_birth,
-                               gender,
-                               location_lat,
-                               location_lng,
-                               location_city,
-                               location_state,
-                               location_country,
-                               location_display,
-                               privacy_show_location,
-                               privacy_show_age,
-                               privacy_profile_visibility,
-                               privacy_last_seen,
-                               is_verified,
-                               verification_document_url,
-                               verified_at,
-                               last_active_at,
-                               profile_completion_percentage,
-                               created_at,
-                               updated_at
+                               id AS Id,
+                               user_id AS UserId,
+                               first_name AS FirstName,
+                               last_name AS LastName,
+                               display_name AS DisplayName,
+                               bio AS Bio,
+                               avatar_url AS AvatarUrl,
+                               cover_image_url AS CoverImageUrl,
+                               date_of_birth AS DateOfBirth,
+                               gender AS Gender,
+                               location_lat AS LocationLat,
+                               location_lng AS LocationLng,
+                               location_city AS LocationCity,
+                               location_state AS LocationState,
+                               location_country AS LocationCountry,
+                               location_display AS LocationDisplay,
+                               privacy_show_location AS PrivacyShowLocation,
+                               privacy_show_age AS PrivacyShowAge,
+                               privacy_profile_visibility AS PrivacyProfileVisibility,
+                               privacy_last_seen AS PrivacyLastSeen,
+                               is_verified AS IsVerified,
+                               verification_document_url AS VerificationDocumentUrl,
+                               verified_at AS VerifiedAt,
+                               last_active_at AS LastActiveAt,
+                               profile_completion_percentage AS ProfileCompletionPercentage,
+                               created_at AS CreatedAt,
+                               updated_at AS UpdatedAt
                            FROM profiles
                            WHERE user_id = @UserId
                            LIMIT 1
@@ -165,7 +165,34 @@ public class ProfileRepository(string connectionString) : IProfileRepository
                                  @CreatedAt,
                                  @UpdatedAt
                                )
-                           RETURNING *
+                           RETURNING 
+                               id AS Id,
+                               user_id AS UserId,
+                               first_name AS FirstName,
+                               last_name AS LastName,
+                               display_name AS DisplayName,
+                               bio AS Bio,
+                               avatar_url AS AvatarUrl,
+                               cover_image_url AS CoverImageUrl,
+                               date_of_birth AS DateOfBirth,
+                               gender AS Gender,
+                               location_lat AS LocationLat,
+                               location_lng AS LocationLng,
+                               location_city AS LocationCity,
+                               location_state AS LocationState,
+                               location_country AS LocationCountry,
+                               location_display AS LocationDisplay,
+                               privacy_show_location AS PrivacyShowLocation,
+                               privacy_show_age AS PrivacyShowAge,
+                               privacy_profile_visibility AS PrivacyProfileVisibility,
+                               privacy_last_seen AS PrivacyLastSeen,
+                               is_verified AS IsVerified,
+                               verification_document_url AS VerificationDocumentUrl,
+                               verified_at AS VerifiedAt,
+                               last_active_at AS LastActiveAt,
+                               profile_completion_percentage AS ProfileCompletionPercentage,
+                               created_at AS CreatedAt,
+                               updated_at AS UpdatedAt
                            """;
 
         var result = await connection.QuerySingleAsync<Profile>(sql, new
@@ -208,31 +235,60 @@ public class ProfileRepository(string connectionString) : IProfileRepository
         await connection.OpenAsync();
 
         const string sql = """
-                           UPDATE profiles
-                           SET
-                               first_name = @FirstName,
-                               last_name = @LastName,
-                               display_name = @DisplayName,
-                               bio = @Bio,
-                               avatar_url = @AvatarUrl,
-                               cover_image_url = @CoverImageUrl,
-                               date_of_birth = @DateOfBirth,
-                               gender = @Gender,
-                               location_lat = @LocationLat,
-                               location_lng = @LocationLng,
-                               location_city = @LocationCity,
-                               location_state = @LocationState,
-                               location_country = @LocationCountry,
-                               location_display = @LocationDisplay,
-                               privacy_show_location = @PrivacyShowLocation,
-                               privacy_show_age = @PrivacyShowAge,
-                               privacy_profile_visibility = @PrivacyProfileVisibility,
-                               privacy_last_seen = @PrivacyLastSeen,
-                               last_active_at = @LastActiveAt,
-                               updated_at = @UpdatedAt
-                           WHERE user_id = @UserId
-                           RETURNING *
-                           """;
+
+                                       UPDATE profiles
+                                       SET
+                                           first_name = @FirstName,
+                                           last_name = @LastName,
+                                           display_name = @DisplayName,
+                                           bio = @Bio,
+                                           avatar_url = @AvatarUrl,
+                                           cover_image_url = @CoverImageUrl,
+                                           date_of_birth = @DateOfBirth,
+                                           gender = @Gender,
+                                           location_lat = @LocationLat,
+                                           location_lng = @LocationLng,
+                                           location_city = @LocationCity,
+                                           location_state = @LocationState,
+                                           location_country = @LocationCountry,
+                                           location_display = @LocationDisplay,
+                                           privacy_show_location = @PrivacyShowLocation,
+                                           privacy_show_age = @PrivacyShowAge,
+                                           privacy_profile_visibility = @PrivacyProfileVisibility,
+                                           privacy_last_seen = @PrivacyLastSeen,
+                                           last_active_at = @LastActiveAt,
+                                           updated_at = @UpdatedAt
+                                       WHERE user_id = @UserId
+                                       RETURNING
+                                           id AS Id,
+                                           user_id AS UserId,
+                                           first_name AS FirstName,
+                                           last_name AS LastName,
+                                           display_name AS DisplayName,
+                                           bio AS Bio,
+                                           avatar_url AS AvatarUrl,
+                                           cover_image_url AS CoverImageUrl,
+                                           date_of_birth AS DateOfBirth,
+                                           gender AS Gender,
+                                           location_lat AS LocationLat,
+                                           location_lng AS LocationLng,
+                                           location_city AS LocationCity,
+                                           location_state AS LocationState,
+                                           location_country AS LocationCountry,
+                                           location_display AS LocationDisplay,
+                                           privacy_show_location AS PrivacyShowLocation,
+                                           privacy_show_age AS PrivacyShowAge,
+                                           privacy_profile_visibility AS PrivacyProfileVisibility,
+                                           privacy_last_seen AS PrivacyLastSeen,
+                                           is_verified AS IsVerified,
+                                           verification_document_url AS VerificationDocumentUrl,
+                                           verified_at AS VerifiedAt,
+                                           last_active_at AS LastActiveAt,
+                                           profile_completion_percentage AS ProfileCompletionPercentage,
+                                           created_at AS CreatedAt,
+                                           updated_at AS UpdatedAt
+                                       
+            """;
 
         var result = await connection.QuerySingleAsync<Profile>(sql, new
         {
@@ -340,18 +396,18 @@ public class ProfileRepository(string connectionString) : IProfileRepository
 
         const string profileSql = """
                                   SELECT 
-                                      p.id,
-                                      p.user_id,
-                                      p.first_name,
-                                      p.last_name,
-                                      u.email,
-                                      p.bio,
-                                      p.avatar_url,
-                                      p.location_display,
-                                      p.location_lat,
-                                      p.location_lng,
-                                      p.created_at,
-                                      p.updated_at
+                                      p.id AS id,
+                                      p.user_id AS user_id,
+                                      p.first_name AS first_name,
+                                      p.last_name AS last_name,
+                                      u.email AS email,
+                                      p.bio AS bio,
+                                      p.avatar_url AS avatar_url,
+                                      p.location_display AS location_display,
+                                      p.location_lat AS location_lat,
+                                      p.location_lng AS location_lng,
+                                      p.created_at AS created_at,
+                                      p.updated_at AS updated_at
                                   FROM profiles p
                                   INNER JOIN users u ON p.user_id = u.id
                                   WHERE p.user_id = @UserId

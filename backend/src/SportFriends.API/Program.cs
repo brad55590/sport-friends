@@ -3,10 +3,12 @@ using FastEndpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using Scalar.AspNetCore;
 using SportFriends.Features.Authentication.Repositories;
 using SportFriends.Features.Authentication.Services;
 using SportFriends.Shared.DTOs;
+using SportFriends.Shared.Exceptions;
 using ApplicationException = SportFriends.Shared.Exceptions.ApplicationException;
 using ErrorResponse = SportFriends.Shared.DTOs.ErrorResponse;
 
@@ -94,7 +96,22 @@ app.UseFastEndpoints(config =>
 });
 
 // Health check endpoint
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
+app.MapGet("/health", async () =>
+{
+    try
+    {
+        using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+        await connection.CloseAsync();
+        var health = new { status = "healthy", timestamp = DateTime.UtcNow, database = "healthy" };
+        return Results.Ok(health);
+    }
+    catch (Exception ex)
+    {
+        var health = new { status = "unhealthy", timestamp = DateTime.UtcNow, database = $"unhealthy: {ex.Message}" };
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+})
     .WithName("Health");
 
 // Global exception handling middleware
@@ -109,6 +126,19 @@ app.UseExceptionHandler(errorApp =>
 
         switch (exception)
         {
+            case ValidationException validationEx:
+                context.Response.StatusCode = validationEx.StatusCode;
+                response = ApiResponse<object?>.Failure(new ErrorResponse
+                {
+                    StatusCode = validationEx.StatusCode,
+                    Code = validationEx.Code,
+                    Message = validationEx.Message,
+                    FieldErrors = validationEx.Errors,
+                    Details = null, // Don't include details for validation errors
+                    Timestamp = DateTime.UtcNow
+                });
+                break;
+
             case ApplicationException appEx:
                 context.Response.StatusCode = appEx.StatusCode;
                 response = ApiResponse<object?>.Failure(new ErrorResponse

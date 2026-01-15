@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline, Box, Button } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box, Button } from '@mui/material';
 import { AuthProvider } from './context/AuthContext';
+import { ErrorProvider } from './context/ErrorContext';
 import { MockProvider, useMockContext } from './context/MockContext';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -9,20 +10,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { PublicRoute } from './components/common/PublicRoute';
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-  typography: {
-    fontFamily: '"Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
-  },
-});
+import { ErrorDisplay } from './components/common/ErrorDisplay';
+import { theme } from './theme';
 
 // Mock Toggle Component
 function MockToggle() {
@@ -64,8 +53,10 @@ function AppContent() {
   return (
     <>
       <Router>
-        <AuthProvider>
-          <Routes>
+        <ErrorProvider>
+          <AuthProvider>
+            <ErrorDisplay />
+            <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
@@ -95,7 +86,8 @@ function AppContent() {
             {/* Root redirect */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </AuthProvider>
+          </AuthProvider>
+        </ErrorProvider>
       </Router>
       <MockToggle />
     </>

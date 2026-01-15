@@ -50,7 +50,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5000
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=sportfriends;Username=sportfriends;Password=dev-password-change-in-prod"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=sportfriends;Username=sportfriends;Password=dev-password-change-in-prod"
       Redis__ConnectionString: "redis:6379"
       # Azure settings (add to .env)
       # Azure__StorageAccountName: ${AZURE_STORAGE_ACCOUNT_NAME}
@@ -75,7 +75,7 @@ services:
       dockerfile: ../infrastructure/docker/Dockerfile.web
     container_name: sport-friends-web
     environment:
-      VITE_API_URL: http://api:5000
+      VITE_API_URL: http://localhost:5000
       VITE_API_VERSION: v1
     ports:
       - "5173:5173"

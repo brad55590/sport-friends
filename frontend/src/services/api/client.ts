@@ -40,6 +40,7 @@ export async function apiCall<T>(
 
     const response = await fetch(url, {
       headers,
+      redirect: 'manual', // Don't automatically follow redirects
       ...options,
     });
 
@@ -60,9 +61,44 @@ export async function apiPost<T>(
     body: data ? JSON.stringify(data) : undefined,
   });
 
+  // Handle redirects (should not happen for API calls, but just in case)
+  if (response.status >= 300 && response.status < 400) {
+    const redirectUrl = response.headers.get('Location');
+    console.error(`[API] Unexpected redirect to ${redirectUrl}, treating as error`);
+    throw new Error(`Unexpected redirect: ${redirectUrl}`);
+  }
+
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || 'API request failed');
+    const contentType = response.headers.get('content-type');
+    let errorMessage = 'API request failed';
+    
+    try {
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        // Handle API error response with validation errors
+        if (errorData.error?.message) {
+          errorMessage = errorData.error.message;
+        }
+        // If there are field errors, append them
+        if (errorData.error?.fieldErrors) {
+          const fieldErrors = Object.entries(errorData.error.fieldErrors)
+            .map(([field, errors]: [string, any]) => {
+              const errorArray = Array.isArray(errors) ? errors : [errors];
+              return errorArray.join(', ');
+            })
+            .join('; ');
+          if (fieldErrors) {
+            errorMessage = errorData.error.message + ': ' + fieldErrors;
+          }
+        }
+      } else {
+        errorMessage = await response.text();
+      }
+    } catch (e) {
+      console.error('[API] Error parsing error response:', e);
+    }
+    
+    throw new Error(errorMessage);
   }
 
   return response.json();
@@ -72,6 +108,13 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
   const response = await apiCall(endpoint, {
     method: 'GET',
   });
+
+  // Handle redirects
+  if (response.status >= 300 && response.status < 400) {
+    const redirectUrl = response.headers.get('Location');
+    console.error(`[API] Unexpected redirect to ${redirectUrl}, treating as error`);
+    throw new Error(`Unexpected redirect: ${redirectUrl}`);
+  }
 
   if (!response.ok) {
     const error = await response.text();
@@ -89,6 +132,13 @@ export async function apiPut<T>(
     method: 'PUT',
     body: data ? JSON.stringify(data) : undefined,
   });
+
+  // Handle redirects
+  if (response.status >= 300 && response.status < 400) {
+    const redirectUrl = response.headers.get('Location');
+    console.error(`[API] Unexpected redirect to ${redirectUrl}, treating as error`);
+    throw new Error(`Unexpected redirect: ${redirectUrl}`);
+  }
 
   if (!response.ok) {
     const error = await response.text();

@@ -1,5 +1,7 @@
 namespace SportFriends.Features.Authentication.DTOs;
 
+using SportFriends.Shared.DTOs;
+
 /// <summary>
 /// Register user request
 /// </summary>
@@ -92,6 +94,51 @@ public class AuthResponse
     /// User email
     /// </summary>
     public required string Email { get; set; }
+
+    /// <summary>
+    /// First name
+    /// </summary>
+    public string? FirstName { get; set; }
+
+    /// <summary>
+    /// Last name
+    /// </summary>
+    public string? LastName { get; set; }
+
+    /// <summary>
+    /// Username (derived from email or display name)
+    /// </summary>
+    public string? Username { get; set; }
+
+    /// <summary>
+    /// User bio
+    /// </summary>
+    public string? Bio { get; set; }
+
+    /// <summary>
+    /// Avatar URL
+    /// </summary>
+    public string? Avatar { get; set; }
+
+    /// <summary>
+    /// Location display
+    /// </summary>
+    public string? Area { get; set; }
+
+    /// <summary>
+    /// Latitude for location
+    /// </summary>
+    public decimal? Latitude { get; set; }
+
+    /// <summary>
+    /// Longitude for location
+    /// </summary>
+    public decimal? Longitude { get; set; }
+
+    /// <summary>
+    /// User sports
+    /// </summary>
+    public List<SportResponse> Sports { get; set; } = [];
 }
 
 /// <summary>

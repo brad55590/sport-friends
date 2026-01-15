@@ -47,15 +47,37 @@ export const handlers = [
         // Simple mock validation
         if (body.email === 'demo@example.com' && body.password === 'password') {
             console.log('[MSW] Login successful - returning mock user');
-            return HttpResponse.json(mockUser, { 
-                status: 200,
-                headers: { 'Content-Type': 'application/json' },
-            });
+            return HttpResponse.json(
+                {
+                    data: {
+                        ...mockUser,
+                        accessToken: 'mock-jwt-token-' + Date.now(),
+                        refreshToken: 'mock-refresh-token-' + Date.now(),
+                        tokenType: 'Bearer',
+                        expiresIn: 3600,
+                        userId: mockUser.id,
+                    },
+                    meta: null,
+                    links: { self: '/api/v1/auth/login' }
+                },
+                { 
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                }
+            );
         }
 
         console.log('[MSW] Login failed - invalid credentials');
         return HttpResponse.json(
-            { error: 'Invalid credentials' },
+            {
+                data: null,
+                error: {
+                    statusCode: 401,
+                    code: 'INVALID_CREDENTIALS',
+                    message: 'Invalid credentials',
+                    fieldErrors: null
+                }
+            },
             { 
                 status: 401,
                 headers: { 'Content-Type': 'application/json' },
@@ -71,12 +93,55 @@ export const handlers = [
             lastName: string;
         };
 
+        // Validate password
+        const passwordErrors: string[] = [];
+        if (body.password.length < 8) {
+            passwordErrors.push('Password must be at least 8 characters long');
+        }
+        if (!/[A-Z]/.test(body.password)) {
+            passwordErrors.push('Password must contain at least one uppercase letter');
+        }
+        if (!/[0-9]/.test(body.password)) {
+            passwordErrors.push('Password must contain at least one digit');
+        }
+        if (!/[^A-Za-z0-9]/.test(body.password)) {
+            passwordErrors.push('Password must contain at least one special character');
+        }
+
+        if (passwordErrors.length > 0) {
+            return HttpResponse.json(
+                {
+                    data: null,
+                    error: {
+                        statusCode: 422,
+                        code: 'VALIDATION_ERROR',
+                        message: 'Validation failed',
+                        fieldErrors: {
+                            Password: passwordErrors
+                        }
+                    }
+                },
+                { 
+                    status: 422,
+                    headers: { 'Content-Type': 'application/json' },
+                }
+            );
+        }
+
         return HttpResponse.json(
             {
-                ...mockUser,
-                email: body.email,
-                firstName: body.firstName,
-                lastName: body.lastName,
+                data: {
+                    accessToken: 'mock-jwt-token-' + Date.now(),
+                    refreshToken: 'mock-refresh-token-' + Date.now(),
+                    tokenType: 'Bearer',
+                    expiresIn: 3600,
+                    userId: '1',
+                    id: '1',
+                    email: body.email,
+                    firstName: body.firstName,
+                    lastName: body.lastName,
+                    username: body.email,
+                }
             },
             { 
                 status: 201,

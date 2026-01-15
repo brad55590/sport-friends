@@ -215,15 +215,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       dispatch({ type: 'LOGIN_SUCCESS', payload: user });
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Login failed';
       dispatch({
         type: 'LOGIN_ERROR',
-        payload: err instanceof Error ? err.message : 'Login failed',
+        payload: errorMsg,
       });
+      throw new Error(errorMsg); // Throw so UI can handle the error
     }
   }, []);
 
   const register = useCallback(
     async (email: string, password: string, firstName: string, lastName: string) => {
+      console.log('[AuthContext] Starting register request...');
       dispatch({ type: 'REGISTER_START' });
       try {
         // Call real API endpoint
@@ -234,6 +237,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           firstName,
           lastName,
         });
+        
+        console.log('[AuthContext] Register response received:', response);
         
         // Extract token and user data from response (wrapped in data property)
         const userData = response.data || response;
@@ -246,19 +251,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
           username: userData.username || email,
         };
         
+        console.log('[AuthContext] Extracted user data:', user);
+        
         // Save token to localStorage
         if (accessToken) {
           localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
           // Add token to future requests
           setupAuthHeader(accessToken);
+          console.log('[AuthContext] Token saved to localStorage');
         }
         
         dispatch({ type: 'REGISTER_SUCCESS', payload: user });
+        console.log('[AuthContext] Dispatched REGISTER_SUCCESS');
       } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Registration failed';
+        console.log('[AuthContext] Registration error:', errorMsg);
         dispatch({
           type: 'REGISTER_ERROR',
-          payload: err instanceof Error ? err.message : 'Registration failed',
+          payload: errorMsg,
         });
+        console.log('[AuthContext] Dispatched REGISTER_ERROR, about to throw');
+        throw new Error(errorMsg); // Throw so UI can handle the error
       }
     },
     []
