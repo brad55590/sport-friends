@@ -9,6 +9,7 @@ import {
   Stack,
   Divider,
 } from '@mui/material';
+import { Person, Email, Lock } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useError } from '../hooks/useError';
 import { FormField } from '../components/forms/FormField';
@@ -176,153 +177,235 @@ export function RegisterPage() {
     Object.values(formErrors).every((errors) => errors.length === 0);
 
   return (
-    <Container maxWidth="sm">
-      <Box
-        sx={{
-          mt: 8,
-          mb: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          {/* Header */}
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
-            <Typography
-              component="h1"
-              variant="h4"
-              sx={{ mb: 1, fontWeight: 'bold' }}
-            >
-              SportFriends
-            </Typography>
-            <Typography variant="body1" color="textSecondary">
-              Create your account
-            </Typography>
-          </Box>
-
-          {/* API Error Alert */}
-          {/* Registration Form */}
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={2.5}>
-              {/* Personal Information Section */}
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
-                >
-                  Personal Information
-                </Typography>
-                <Stack spacing={2}>
-                  <FormField
-                    label="First Name"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleFieldChange}
-                    errors={formErrors.firstName}
-                    disabled={isLoading}
-                    placeholder="John"
-                    autoComplete="given-name"
-                  />
-                  <FormField
-                    label="Last Name"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleFieldChange}
-                    errors={formErrors.lastName}
-                    disabled={isLoading}
-                    placeholder="Doe"
-                    autoComplete="family-name"
-                  />
-                </Stack>
-              </Box>
-
-              <Divider />
-
-              {/* Email Section */}
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
-                >
-                  Email
-                </Typography>
-                <FormField
-                  label="Email Address"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleFieldChange}
-                  errors={formErrors.email}
-                  disabled={isLoading}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                />
-              </Box>
-
-              <Divider />
-
-              {/* Password Section */}
-              <Box>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}
-                >
-                  Password
-                </Typography>
-                <Stack spacing={2}>
-                  <PasswordField
-                    label="Password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleFieldChange}
-                    errors={formErrors.password}
-                    disabled={isLoading}
-                    showStrengthIndicator={true}
-                  />
-                  <PasswordField
-                    label="Confirm Password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleFieldChange}
-                    errors={formErrors.confirmPassword}
-                    disabled={isLoading}
-                    showStrengthIndicator={false}
-                  />
-                </Stack>
-              </Box>
-
-              {/* Submit Button */}
-              <SubmitButton
-                isLoading={isLoading}
-                disabled={!isFormValid}
-                sx={{ mt: 1 }}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <Paper
+            elevation={8}
+            sx={{
+              p: 4,
+              width: '100%',
+              borderRadius: 3,
+              background: '#ffffff',
+            }}
+          >
+            {/* Header */}
+            <Box sx={{ mb: 4, textAlign: 'center' }}>
+              <Typography
+                component="h1"
+                variant="h4"
+                sx={{
+                  mb: 1,
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
               >
-                Create Account
-              </SubmitButton>
+                SportFriends
+              </Typography>
+              <Typography
+                variant="body1"
+                color="textSecondary"
+                sx={{ fontWeight: 500 }}
+              >
+                Create your account
+              </Typography>
+            </Box>
 
-              {/* Sign In Link */}
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Typography variant="body2" color="textSecondary">
-                  Already have an account?{' '}
-                  <Button
-                    color="primary"
-                    sx={{
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      p: 0,
-                      ml: 0.5,
-                    }}
-                    onClick={() => navigate('/login')}
-                  >
-                    Sign In
-                  </Button>
-                </Typography>
-              </Box>
-            </Stack>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+            {/* API Error Alert */}
+            {/* Registration Form */}
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={3}>
+                {/* Personal Information Section */}
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Person
+                      sx={{
+                        mr: 1,
+                        color: 'primary.main',
+                        fontSize: '1.5rem',
+                      }}
+                    />
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: 700,
+                        color: 'primary.main',
+                        fontSize: '0.95rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      Personal Information
+                    </Typography>
+                  </Box>
+                  <Stack spacing={2}>
+                    <FormField
+                      label="First Name"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleFieldChange}
+                      errors={formErrors.firstName}
+                      disabled={isLoading}
+                      placeholder="John"
+                      autoComplete="given-name"
+                    />
+                    <FormField
+                      label="Last Name"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleFieldChange}
+                      errors={formErrors.lastName}
+                      disabled={isLoading}
+                      placeholder="Doe"
+                      autoComplete="family-name"
+                    />
+                  </Stack>
+                </Box>
+
+                <Divider sx={{ my: 1 }} />
+
+                {/* Email Section */}
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Email
+                      sx={{
+                        mr: 1,
+                        color: 'primary.main',
+                        fontSize: '1.5rem',
+                      }}
+                    />
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: 700,
+                        color: 'primary.main',
+                        fontSize: '0.95rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      Email
+                    </Typography>
+                  </Box>
+                  <FormField
+                    label="Email Address"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleFieldChange}
+                    errors={formErrors.email}
+                    disabled={isLoading}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                  />
+                </Box>
+
+                <Divider sx={{ my: 1 }} />
+
+                {/* Password Section */}
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Lock
+                      sx={{
+                        mr: 1,
+                        color: 'primary.main',
+                        fontSize: '1.5rem',
+                      }}
+                    />
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: 700,
+                        color: 'primary.main',
+                        fontSize: '0.95rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      Password
+                    </Typography>
+                  </Box>
+                  <Stack spacing={2}>
+                    <PasswordField
+                      label="Password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleFieldChange}
+                      errors={formErrors.password}
+                      disabled={isLoading}
+                      showStrengthIndicator={true}
+                    />
+                    <PasswordField
+                      label="Confirm Password"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleFieldChange}
+                      errors={formErrors.confirmPassword}
+                      disabled={isLoading}
+                      showStrengthIndicator={false}
+                    />
+                  </Stack>
+                </Box>
+
+                {/* Submit Button */}
+                <SubmitButton
+                  isLoading={isLoading}
+                  disabled={!isFormValid}
+                  sx={{
+                    mt: 2,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    '&:hover': {
+                      background:
+                        'linear-gradient(135deg, #5568d3 0%, #6a3a8a 100%)',
+                    },
+                  }}
+                >
+                  Create Account
+                </SubmitButton>
+
+                {/* Sign In Link */}
+                <Box sx={{ textAlign: 'center', mt: 2 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Already have an account?{' '}
+                    <Button
+                      color="primary"
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        p: 0,
+                        ml: 0.5,
+                        '&:hover': {
+                          textDecoration: 'underline',
+                        },
+                      }}
+                      onClick={() => navigate('/login')}
+                    >
+                      Sign In
+                    </Button>
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
+    </Box>
   );
 }

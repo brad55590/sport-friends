@@ -25,6 +25,20 @@ export function FormField({
         helperText={hasError ? displayErrors.join('; ') : helperText}
         fullWidth
         size="medium"
+        variant="outlined"
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            transition: 'all 0.2s ease',
+            '&:hover fieldset': {
+              borderColor: 'primary.main',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: 'primary.main',
+              boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+            },
+          },
+          ...props.sx,
+        }}
       />
     </Stack>
   );

@@ -41,6 +41,7 @@ export function PasswordField({
         helperText={hasError ? errors.join('; ') : props.helperText}
         fullWidth
         size="medium"
+        variant="outlined"
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -48,11 +49,31 @@ export function PasswordField({
                 aria-label="toggle password visibility"
                 onClick={handleToggleVisibility}
                 edge="end"
+                sx={{
+                  color: 'inherit',
+                  transition: 'color 0.2s ease',
+                  '&:hover': {
+                    color: 'primary.main',
+                  },
+                }}
               >
                 {showPassword ? <VisibilityOff /> : <Visibility />}
               </IconButton>
             </InputAdornment>
           ),
+        }}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            transition: 'all 0.2s ease',
+            '&:hover fieldset': {
+              borderColor: 'primary.main',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: 'primary.main',
+              boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+            },
+          },
+          ...props.sx,
         }}
       />
       {showStrengthIndicator && (

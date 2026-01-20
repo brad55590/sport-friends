@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Box, AppBar, Toolbar, Typography, Container, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider, useMediaQuery, useTheme, IconButton, Avatar, Menu, MenuItem, Tooltip } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { gradients } from '../../theme';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -63,7 +64,7 @@ export function Layout({ children }: LayoutProps) {
       <Box 
         sx={{ 
           p: 2, 
-          bgcolor: 'primary.main', 
+          background: gradients.primary,
           color: 'white',
           display: 'flex',
           alignItems: 'center',
@@ -72,7 +73,7 @@ export function Layout({ children }: LayoutProps) {
         }}
       >
         {sidebarOpen && (
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
             SportFriends
           </Typography>
         )}
@@ -105,13 +106,18 @@ export function Layout({ children }: LayoutProps) {
                   justifyContent: sidebarOpen ? 'flex-start' : 'center',
                   minHeight: 56,
                   '&.Mui-selected': {
-                    backgroundColor: 'rgba(25, 118, 210, 0.12)',
-                    borderRight: sidebarOpen ? '4px solid' : 'none',
+                    background: 'rgba(102, 126, 234, 0.1)',
+                    borderRight: sidebarOpen ? '3px solid' : 'none',
                     borderRightColor: 'primary.main',
+                    fontWeight: 600,
                   },
+                  '&:hover': {
+                    background: 'rgba(102, 126, 234, 0.08)',
+                  },
+                  transition: 'all 0.2s ease',
                 }}
               >
-                <ListItemIcon sx={{ minWidth: sidebarOpen ? 40 : 'auto', justifyContent: 'center' }}>
+                <ListItemIcon sx={{ minWidth: sidebarOpen ? 40 : 'auto', justifyContent: 'center', color: 'primary.main' }}>
                   {item.icon}
                 </ListItemIcon>
                 {sidebarOpen && <ListItemText primary={item.label} />}
@@ -131,9 +137,9 @@ export function Layout({ children }: LayoutProps) {
         sx={{
           width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
           ml: { xs: 0, md: `${drawerWidth}px` },
-          backgroundColor: 'white',
+          background: '#ffffff',
           color: 'text.primary',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
           transition: theme.transitions.create(['margin', 'width'], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.enteringScreen,
@@ -146,11 +152,21 @@ export function Layout({ children }: LayoutProps) {
             aria-label="open drawer"
             edge="start"
             onClick={() => setMobileOpen(!mobileOpen)}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ mr: 2, display: { md: 'none' }, color: 'primary.main' }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              flexGrow: 1,
+              fontWeight: 700,
+              background: gradients.primary,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
             {menuItems.find(item => item.path === location.pathname)?.label || 'SportFriends'}
           </Typography>
 
@@ -164,8 +180,10 @@ export function Layout({ children }: LayoutProps) {
               sx={{ 
                 width: 40, 
                 height: 40,
-                bgcolor: 'primary.main',
+                background: gradients.primary,
+                fontWeight: 700,
                 cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(102, 126, 234, 0.2)',
               }}
             >
               {user?.firstName?.charAt(0).toUpperCase()}
@@ -187,13 +205,13 @@ export function Layout({ children }: LayoutProps) {
             }}
           >
             <MenuItem disabled sx={{ opacity: 1 }}>
-              <Typography variant="subtitle2">
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 {user?.firstName} {user?.lastName}
               </Typography>
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleProfileClick}>
-              <PersonIcon sx={{ mr: 2 }} />
+              <PersonIcon sx={{ mr: 2, color: 'primary.main' }} />
               <Typography>My Profile</Typography>
             </MenuItem>
             <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
@@ -215,8 +233,8 @@ export function Layout({ children }: LayoutProps) {
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
-            backgroundColor: '#f8f9fa',
-            borderRight: '1px solid #e0e0e0',
+            backgroundColor: '#ffffff',
+            borderRight: '1px solid rgba(0, 0, 0, 0.08)',
             transition: theme.transitions.create('width', {
               easing: theme.transitions.easing.sharp,
               duration: theme.transitions.duration.enteringScreen,
@@ -248,8 +266,7 @@ export function Layout({ children }: LayoutProps) {
         <Toolbar />
 
         {/* Page Content */}
-        <Container
-          maxWidth="lg"
+        <Box
           sx={{
             flex: 1,
             py: 3,
@@ -257,7 +274,7 @@ export function Layout({ children }: LayoutProps) {
           }}
         >
           {children}
-        </Container>
+        </Box>
 
         {/* Footer */}
         <Box
@@ -267,11 +284,11 @@ export function Layout({ children }: LayoutProps) {
             px: 2,
             mt: 'auto',
             bgcolor: 'background.paper',
-            borderTop: '1px solid #e0e0e0',
+            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
             textAlign: 'center',
           }}
         >
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
             © 2026 SportFriends. All rights reserved.
           </Typography>
         </Box>

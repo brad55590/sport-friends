@@ -47,7 +47,7 @@ public class RegisterUserHandler(IAuthRepository authRepository, IProfileReposit
             Email = command.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(command.Password),
             Status = "active",
-            Role = "user"
+            Role = "Authenticated"
         };
 
         var createdUser = await authRepository.CreateUserAsync(user);

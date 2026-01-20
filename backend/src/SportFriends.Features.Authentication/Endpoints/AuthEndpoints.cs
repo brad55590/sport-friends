@@ -115,8 +115,8 @@ public class GetCurrentUserEndpoint : Endpoint<EmptyRequest, ApiResponse<Current
     public override void Configure()
     {
         Get("/auth/me");
-        // Policies("Authenticated");
-        Roles("Authenticated");
+        // Require authentication but not a specific role
+        // This allows both "user" and "Authenticated" roles
     }
 
     public override async Task HandleAsync(EmptyRequest request, CancellationToken cancellationToken)

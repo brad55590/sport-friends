@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using SportFriends.Features.Authentication.Repositories;
 using SportFriends.Shared.DTOs;
 using SportFriends.Shared.Entities;
+using System.Security.Claims;
 
 namespace SportFriends.Features.Authentication.Endpoints;
 
@@ -21,12 +22,15 @@ public class GetProfileEndpoint : Endpoint<EmptyRequest, ApiResponse<ProfileResp
     public override void Configure()
     {
         Get("/users/profile");
-        Roles("Authenticated");
+        // Require authentication but not a specific role
+        // This allows both "user" and "Authenticated" roles
     }
 
     public override async Task HandleAsync(EmptyRequest _, CancellationToken cancellationToken)
     {
-        var userId = User.FindFirst("sub")?.Value;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        var userId = userIdClaim;
+        Console.WriteLine($"[UpdateProfile] User ID from claims: {userId}");
         if (userId == null || !Guid.TryParse(userId, out var userIdGuid))
         {
             await Send.UnauthorizedAsync(cancellationToken);
@@ -73,14 +77,28 @@ public class UpdateProfileEndpoint : Endpoint<UpdateProfileRequest, ApiResponse<
     public override void Configure()
     {
         Put("/users/profile");
-        Roles("Authenticated");
+        // Require authentication but not a specific role
+        // This allows both "user" and "Authenticated" roles
     }
 
     public override async Task HandleAsync(UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        var userId = User.FindFirst("sub")?.Value;
+        // Log authentication details for debugging
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        Console.WriteLine($"[UpdateProfile] Authorization Header: {authHeader}");
+        Console.WriteLine($"[UpdateProfile] User.Identity.IsAuthenticated: {User.Identity?.IsAuthenticated}");
+        Console.WriteLine($"[UpdateProfile] User Claims Count: {User.Claims.Count()}");
+        foreach (var claim in User.Claims)
+        {
+            Console.WriteLine($"[UpdateProfile] Claim: {claim.Type} = {claim.Value}");
+        }
+        
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        Console.WriteLine($"[UpdateProfile] User ID from claims: {userId}");
+        
         if (userId == null || !Guid.TryParse(userId, out var userIdGuid))
         {
+            Console.WriteLine($"[UpdateProfile] UNAUTHORIZED - userId is null or invalid GUID");
             await Send.UnauthorizedAsync(cancellationToken);
             return;
         }
@@ -169,13 +187,15 @@ public class UploadAvatarEndpoint : Endpoint<UploadAvatarRequest, ApiResponse<Pr
     public override void Configure()
     {
         Post("/users/profile/avatar");
-        Roles("Authenticated");
+        // Require authentication but not a specific role
+        // This allows both "user" and "Authenticated" roles
         AllowFileUploads();
     }
 
     public override async Task HandleAsync(UploadAvatarRequest request, CancellationToken cancellationToken)
     {
-        var userId = User.FindFirst("sub")?.Value;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        var userId = userIdClaim;
         if (userId == null || !Guid.TryParse(userId, out var userIdGuid))
         {
             await Send.UnauthorizedAsync(cancellationToken);

@@ -48,6 +48,37 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
+    
+    // Add event logging for debugging
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Headers["Authorization"].ToString();
+            Console.WriteLine($"[JWT] OnMessageReceived - Token: {token}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine($"[JWT] OnTokenValidated - Token is VALID");
+            Console.WriteLine($"[JWT] User Identity: {context.Principal?.Identity?.Name}");
+            Console.WriteLine($"[JWT] Claims Count: {context.Principal?.Claims.Count()}");
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"[JWT] OnAuthenticationFailed - Error: {context.Exception.Message}");
+            Console.WriteLine($"[JWT] Exception Type: {context.Exception.GetType().Name}");
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            Console.WriteLine($"[JWT] OnChallenge - Authentication challenged");
+            Console.WriteLine($"[JWT] Error: {context.Error}");
+            Console.WriteLine($"[JWT] ErrorDescription: {context.ErrorDescription}");
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();

@@ -112,7 +112,8 @@ function saveAuthToStorage(state: AuthState) {
 function clearAuthFromStorage() {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    console.log('[Auth] Cleared auth state from localStorage');
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    console.log('[Auth] Cleared auth state and token from localStorage');
   } catch (err) {
     console.error('[Auth] Failed to clear auth from localStorage:', err);
   }
@@ -291,16 +292,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Call real API endpoint with PUT
       const response = await apiPut<any>('/api/v1/users/profile', profile);
       
-      // Extract user data from response
+      // Extract user data from response, preserving all fields
       const updatedUser: User = {
         id: response.id || state.user?.id || '',
         email: response.email || state.user?.email || '',
         firstName: response.firstName || profile.firstName || state.user?.firstName || '',
         lastName: response.lastName || profile.lastName || state.user?.lastName || '',
-        username: response.username || state.user?.username || '',
-        bio: response.bio,
-        avatar: response.avatar,
-        sports: response.sports,
+        username: response.username || profile.username || state.user?.username || '',
+        bio: response.bio || profile.bio || state.user?.bio || '',
+        avatar: response.avatar || profile.avatar || state.user?.avatar || '',
+        area: response.area || profile.area || state.user?.area || '',
+        latitude: response.latitude !== undefined ? response.latitude : (profile.latitude !== undefined ? profile.latitude : state.user?.latitude),
+        longitude: response.longitude !== undefined ? response.longitude : (profile.longitude !== undefined ? profile.longitude : state.user?.longitude),
+        sports: response.sports || profile.sports || state.user?.sports || [],
       };
       
       dispatch({ type: 'UPDATE_PROFILE_SUCCESS', payload: updatedUser });
