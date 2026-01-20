@@ -11,10 +11,10 @@ import {
   InputAdornment,
   Link,
   useTheme,
+  Stack,
 } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
-import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import { useAuth } from '../hooks/useAuth';
 import { useError } from '../hooks/useError';
 import { gradients } from '../theme';
@@ -70,191 +70,185 @@ export function LoginPage() {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 4,
-        }}
-      >
-        <Paper
-          elevation={0}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: gradients.primary,
+        display: 'flex',
+        alignItems: 'center',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Box
           sx={{
-            p: 4,
-            width: '100%',
-            background: gradients.primary,
-            borderRadius: 2,
-            mb: 3,
-            textAlign: 'center',
-            color: 'white',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-            <SportsSoccerIcon sx={{ fontSize: 48 }} />
-          </Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
-            SportFriends
-          </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.95 }}>
-            Connect with athletes. Find your team.
-          </Typography>
-        </Paper>
-
-        <Paper
-          elevation={3}
-          sx={{
-            p: 4,
-            width: '100%',
-            borderRadius: 2,
-          }}
-        >
-          <Typography
-            variant="h5"
-            component="h2"
+          <Paper
+            elevation={8}
             sx={{
-              mb: 1,
-              fontWeight: 'bold',
-              textAlign: 'center',
-              color: theme.palette.text.primary,
+              p: 4,
+              width: '100%',
+              borderRadius: 3,
+              background: '#ffffff',
             }}
           >
-            Welcome Back
-          </Typography>
-          <Typography
-            variant="body2"
-            color="textSecondary"
-            sx={{
-              mb: 3,
-              textAlign: 'center',
-            }}
-          >
-            Sign in to your account to continue
-          </Typography>
-
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              placeholder="you@example.com"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon sx={{ color: theme.palette.primary.main, mr: 1 }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: theme.palette.primary.main,
-                  },
-                },
-              }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              placeholder="Enter your password"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockIcon sx={{ color: theme.palette.primary.main, mr: 1 }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: theme.palette.primary.main,
-                  },
-                },
-              }}
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{
-                mt: 3,
-                mb: 2,
-                background: gradients.primary,
-                py: 1.5,
-                fontSize: '1rem',
-                fontWeight: 'bold',
-                textTransform: 'none',
-                borderRadius: 1,
-                '&:hover': {
-                  background: gradients.primaryHover,
-                },
-              }}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Sign In'
-              )}
-            </Button>
-
-            <Box sx={{ mt: 3, textAlign: 'center' }}>
-              <Typography variant="body2" color="textSecondary">
-                Don't have an account?{' '}
-                <Link
-                  component="button"
-                  type="button"
-                  variant="body2"
-                  onClick={() => navigate('/register')}
-                  sx={{
-                    color: theme.palette.primary.main,
-                    fontWeight: 'bold',
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    },
-                  }}
-                >
-                  Create an account
-                </Link>
+            {/* Header */}
+            <Box sx={{ mb: 4, textAlign: 'center' }}>
+              <Typography
+                component="h1"
+                variant="h4"
+                sx={{
+                  mb: 1,
+                  fontWeight: 800,
+                  background: gradients.primary,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                SportFriends
+              </Typography>
+              <Typography
+                variant="body1"
+                color="textSecondary"
+                sx={{ fontWeight: 500 }}
+              >
+                Sign in to your account
               </Typography>
             </Box>
-          </Box>
-        </Paper>
 
-        <Typography
-          variant="caption"
-          color="textSecondary"
-          sx={{
-            mt: 4,
-            textAlign: 'center',
-          }}
-        >
-          © 2025 SportFriends. All rights reserved.
-        </Typography>
-      </Box>
-    </Container>
+            {/* Login Form */}
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2.5}>
+                <TextField
+                  required
+                  fullWidth
+                  id="email"
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  placeholder="you@example.com"
+                  size="medium"
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon sx={{ color: 'primary.main', mr: 1 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      transition: 'all 0.2s ease',
+                      '&:hover fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                        boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                      },
+                    },
+                  }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  name="password"
+                  label="Password"
+                  type="password"
+                  id="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  placeholder="Enter your password"
+                  size="medium"
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon sx={{ color: 'primary.main', mr: 1 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      transition: 'all 0.2s ease',
+                      '&:hover fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                        boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                      },
+                    },
+                  }}
+                />
+
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    mt: 2,
+                    background: gradients.primary,
+                    py: 1.5,
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: 1,
+                    '&:hover': {
+                      background: gradients.primaryHover,
+                    },
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <CircularProgress size={20} color="inherit" />
+                      Signing in...
+                    </Box>
+                  ) : (
+                    'Sign In'
+                  )}
+                </Button>
+
+                {/* Create Account Link */}
+                <Box sx={{ textAlign: 'center', mt: 2 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Don't have an account?{' '}
+                    <Button
+                      color="primary"
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        p: 0,
+                        ml: 0.5,
+                        '&:hover': {
+                          textDecoration: 'underline',
+                        },
+                      }}
+                      onClick={() => navigate('/register')}
+                    >
+                      Create one
+                    </Button>
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
+    </Box>
   );
 }
+
+export default LoginPage;

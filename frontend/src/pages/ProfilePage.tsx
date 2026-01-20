@@ -15,14 +15,17 @@ import {
   Stack,
   Card,
   CardContent,
+  Divider,
 } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import SaveIcon from '@mui/icons-material/Save';
 import { useAuth } from '../hooks/useAuth';
+import { gradients } from '../theme';
 import { Sport } from '../context/AuthContext';
 
 export function ProfilePage() {
   const { user, updateProfile, isLoading, error, clearError } = useAuth();
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -64,10 +67,26 @@ export function ProfilePage() {
         longitude: user.longitude || 0,
         avatar: user.avatar || '',
       });
-      // Ensure selectedSports is updated with current user sports
-      const sportIds = (user.sports || []).map(s => s.id);
+
+      // Ensure selectedSports is updated with current user sports (supports id strings or Sport objects)
+      const sportIds = (user.sports || [])
+        .map((s: any) => (typeof s === 'string' ? s : s?.id))
+        .filter(Boolean) as string[];
       setSelectedSports(sportIds);
       console.log('[ProfilePage] Set selectedSports to:', sportIds);
+
+      // Prefill location search/value when profile already has a location
+      if (user.area) {
+        setSelectedLocation({
+          name: user.area,
+          lat: user.latitude || 0,
+          lng: user.longitude || 0,
+        });
+        setLocationSearch(user.area);
+      } else {
+        setSelectedLocation(null);
+        setLocationSearch('');
+      }
     } else {
       // Reset form when user is not loaded
       console.log('[ProfilePage] User not loaded, resetting form');
@@ -83,6 +102,8 @@ export function ProfilePage() {
         avatar: '',
       });
       setSelectedSports([]);
+      setSelectedLocation(null);
+      setLocationSearch('');
     }
   }, [user]);
 
@@ -144,11 +165,19 @@ export function ProfilePage() {
     loadSports();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,8 +266,8 @@ export function ProfilePage() {
       latitude: location.lat,
       longitude: location.lng,
     });
-    setSelectedLocation(null);
-    setLocationSearch('');
+    setSelectedLocation(location);
+    setLocationSearch(location.name);
     setLocationOptions([]);
     console.log('[ProfilePage] Location selected:', location);
   };
@@ -270,26 +299,62 @@ export function ProfilePage() {
       .map(s => s.name);
   };
 
+  // Check if form is valid for submission
+  const isFormValid = formData.firstName.trim() && formData.lastName.trim() && formData.email.trim() && formData.username.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
     setSuccessMessage('');
+    setValidationErrors({});
+
+    // Validate required fields
+    const errors: { [key: string]: string } = {};
+    if (!formData.firstName.trim()) errors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
+    if (!formData.email.trim()) errors.email = 'Email is required';
+    if (!formData.username.trim()) errors.username = 'Username is required';
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      console.error('[ProfilePage] Form validation failed:', errors);
+      return;
+    }
 
     try {
-      const selectedSportObjects = availableSports.filter(s =>
-        selectedSports.includes(s.id)
-      );
+      console.log('[ProfilePage] Saving profile with data:', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        username: formData.username,
+        bio: formData.bio,
+        area: formData.area,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        avatar: formData.avatar ? `[${formData.avatar.length} bytes]` : 'none',
+        sports: selectedSports, // Array of sport IDs
+      });
 
-      console.log('[ProfilePage] Saving profile with sports:', selectedSportObjects.map(s => s.name));
+      const profileData = {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        username: formData.username.trim(),
+        bio: formData.bio || '',
+        area: formData.area || '',
+        latitude: formData.latitude || 0,
+        longitude: formData.longitude || 0,
+        avatar: formData.avatar || '',
+        sports: selectedSports, // Send array of sport IDs, not objects
+      };
 
-      await updateProfile({
-        ...formData,
-        sports: selectedSportObjects,
-      } as any);
+      await updateProfile(profileData);
 
       setSuccessMessage('Profile updated successfully!');
+      console.log('[ProfilePage] Profile saved successfully');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
+      console.error('[ProfilePage] Error saving profile:', err);
       // Error is handled by context
     }
   };
@@ -297,7 +362,14 @@ export function ProfilePage() {
   if (!user) {
     return (
       <Container maxWidth="sm">
-        <Box sx={{ mt: 8, textAlign: 'center' }}>
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Typography variant="h6">Loading profile...</Typography>
         </Box>
       </Container>
@@ -305,304 +377,528 @@ export function ProfilePage() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ maxWidth: 700, mx: 'auto' }}>
-        {/* Header */}
-        <Box sx={{ mb: 4, textAlign: 'center' }}>
-          <Typography component="h1" variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-            Edit Profile
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Update your profile information and preferences
-          </Typography>
-        </Box>
-
-        {/* Alerts */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {successMessage && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {successMessage}
-          </Alert>
-        )}
-
-        <Box component="form" onSubmit={handleSubmit}>
-          {/* Avatar Section */}
-          <Card sx={{ mb: 4 }}>
-            <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 4 }}>
-              <Avatar
-                sx={{
-                  width: 100,
-                  height: 100,
-                  bgcolor: 'primary.main',
-                  fontSize: '2.5rem',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                }}
-                src={formData.avatar}
-              >
-                {!formData.avatar && (
-                  <>
-                    {user?.firstName?.charAt(0).toUpperCase()}
-                    {user?.lastName?.charAt(0).toUpperCase()}
-                  </>
-                )}
-              </Avatar>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <input
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  id="avatar-input"
-                  type="file"
-                  onChange={handleAvatarChange}
-                  disabled={isLoading}
-                />
-                <label htmlFor="avatar-input">
-                  <IconButton
-                    color="primary"
-                    aria-label="upload picture"
-                    component="span"
-                    disabled={isLoading}
-                    size="small"
-                  >
-                    <CameraAltIcon />
-                  </IconButton>
-                </label>
-                <Typography variant="caption" color="text.secondary">
-                  Change photo
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Personal Information Section */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                Personal Information
-              </Typography>
-              <Stack spacing={2}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  size="small"
-                />
-
-                <TextField
-                  required
-                  fullWidth
-                  label="Username"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  size="small"
-                  helperText="Your unique SportFriends username"
-                />
-
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="First Name"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    size="small"
-                  />
-
-                  <TextField
-                    required
-                    fullWidth
-                    label="Last Name"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    size="small"
-                  />
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-
-          {/* Location Section */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                📍 Location
-              </Typography>
-              <Stack spacing={2}>
-                <Autocomplete
-                  options={locationOptions}
-                  getOptionLabel={(option) => option.name}
-                  loading={isSearchingLocation}
-                  value={selectedLocation}
-                  inputValue={locationSearch}
-                  onInputChange={(_, value, reason) => {
-                    if (reason === 'input') {
-                      handleLocationSearch(value);
-                    }
-                  }}
-                  onChange={(_, value) => handleLocationSelect(value)}
-                  noOptionsText={
-                    locationSearch.length < 3
-                      ? 'Type at least 3 characters to search'
-                      : 'No locations found'
-                  }
-                  filterOptions={(options) => options}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Search Location"
-                      placeholder="e.g., San Francisco, CA"
-                      fullWidth
-                      size="small"
-                      helperText="Search your city or region for exact coordinates"
-                    />
-                  )}
-                />
-
-                {/* Display Selected Location Coordinates */}
-                {(formData.latitude !== 0 || formData.longitude !== 0) && (
-                  <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 1, border: '1px solid', borderColor: 'success.light' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.dark', mb: 0.5 }}>
-                      ✓ Location Confirmed
-                    </Typography>
-                    <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
-                      {formData.area}
-                    </Typography>
-                    <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.75rem' }}>
-                      {formData.latitude?.toFixed(4)}, {formData.longitude?.toFixed(4)}
-                    </Typography>
-                  </Box>
-                )}
-              </Stack>
-            </CardContent>
-          </Card>
-
-          {/* Sports Section */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                ⚽ Sports Interests
-              </Typography>
-              <Stack spacing={2}>
-                {/* Selected Sports Chips */}
-                {selectedSports.length > 0 && (
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                      Selected ({selectedSports.length})
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {getSelectedSportNames().map(sportName => (
-                        <Chip
-                          key={sportName}
-                          label={sportName}
-                          onDelete={() => {
-                            const sportId = availableSports.find(s => s.name === sportName)?.id;
-                            if (sportId) handleSportChange(sportId);
-                          }}
-                          color="primary"
-                          variant="filled"
-                          disabled={isLoading}
-                          size="small"
-                        />
-                      ))}
-                    </Box>
-                  </Box>
-                )}
-
-                {/* Sports Autocomplete Dropdown */}
-                <Autocomplete
-                  disabled={isLoading}
-                  options={filteredSports}
-                  getOptionLabel={(option) => option.name}
-                  value={selectedSport}
-                  inputValue={sportSearch}
-                  onInputChange={(_, value) => setSportSearch(value)}
-                  onChange={(_, value) => {
-                    if (value) {
-                      handleSportChange(value.id);
-                      setSportSearch('');
-                      setSelectedSport(null);
-                    }
-                  }}
-                  noOptionsText={
-                    sportSearch.length < 3
-                      ? 'Type at least 3 characters to search'
-                      : 'No sports found'
-                  }
-                  filterOptions={(options) => {
-                    if (sportSearch.length < 3) {
-                      return [];
-                    }
-                    return options.filter(option =>
-                      option.name.toLowerCase().includes(sportSearch.toLowerCase())
-                    );
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Add Sports"
-                      placeholder="Search to add more sports..."
-                      fullWidth
-                      size="small"
-                      helperText="Search for sports you enjoy (min 3 characters)"
-                    />
-                  )}
-                />
-              </Stack>
-            </CardContent>
-          </Card>
-
-          {/* Bio Section */}
-          <Card sx={{ mb: 4 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                About You
-              </Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                label="Bio"
-                name="bio"
-                placeholder="Tell other sports enthusiasts about yourself..."
-                value={formData.bio}
-                onChange={handleChange}
-                disabled={isLoading}
-                helperText="Write a short bio to help others get to know you (max 500 characters)"
-                size="small"
-              />
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
-              disabled={isLoading}
-              sx={{ minWidth: 200 }}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: gradients.primary,
+        py: 4,
+      }}
+    >
+      <Container maxWidth="md">
+        <Box sx={{ maxWidth: 700, mx: 'auto' }}>
+          {/* Header */}
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Typography
+              component="h1"
+              variant="h4"
+              sx={{
+                fontWeight: 800,
+                mb: 1,
+                color: 'white',
+              }}
             >
-              {isLoading ? 'Saving...' : 'Save Profile'}
-            </Button>
+              Edit Profile
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.8)',
+              }}
+            >
+              Update your profile information and preferences
+            </Typography>
+          </Box>
+
+          {/* Alerts */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {successMessage && (
+            <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>
+              {successMessage}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit}>
+            {/* Avatar Section */}
+            <Paper
+              elevation={8}
+              sx={{
+                mb: 4,
+                borderRadius: 3,
+                background: '#ffffff',
+              }}
+            >
+              <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 4 }}>
+                <Avatar
+                  sx={{
+                    width: 100,
+                    height: 100,
+                    background: gradients.primary,
+                    fontSize: '2.5rem',
+                    fontWeight: 700,
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                  }}
+                  src={formData.avatar}
+                >
+                  {!formData.avatar && (
+                    <>
+                      {user?.firstName?.charAt(0).toUpperCase()}
+                      {user?.lastName?.charAt(0).toUpperCase()}
+                    </>
+                  )}
+                </Avatar>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="avatar-input"
+                    type="file"
+                    onChange={handleAvatarChange}
+                    disabled={isLoading}
+                  />
+                  <label htmlFor="avatar-input">
+                    <IconButton
+                      color="primary"
+                      aria-label="upload picture"
+                      component="span"
+                      disabled={isLoading}
+                      size="small"
+                      sx={{
+                        '&:hover': {
+                          bgcolor: 'rgba(102, 126, 234, 0.1)',
+                        },
+                      }}
+                    >
+                      <CameraAltIcon />
+                    </IconButton>
+                  </label>
+                  <Typography variant="caption" color="text.secondary">
+                    Change photo
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Paper>
+
+            {/* Personal Information Section */}
+            <Paper
+              elevation={8}
+              sx={{
+                mb: 3,
+                borderRadius: 3,
+                background: '#ffffff',
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    mb: 2,
+                    color: 'primary.main',
+                    fontSize: '1.1rem',
+                  }}
+                >
+                  Personal Information
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <Stack spacing={2}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    size="medium"
+                    variant="outlined"
+                    error={!!validationErrors.email}
+                    helperText={validationErrors.email}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        transition: 'all 0.2s ease',
+                        '&:hover fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'primary.main',
+                          boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                        },
+                      },
+                    }}
+                  />
+
+                  <TextField
+                    required
+                    fullWidth
+                    label="Username"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    size="medium"
+                    variant="outlined"
+                    error={!!validationErrors.username}
+                    helperText={validationErrors.username}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        transition: 'all 0.2s ease',
+                        '&:hover fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'primary.main',
+                          boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                        },
+                      },
+                    }}
+                  />
+
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                    <TextField
+                      required
+                      fullWidth
+                      label="First Name"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                      size="medium"
+                      variant="outlined"
+                      error={!!validationErrors.firstName}
+                      helperText={validationErrors.firstName}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          transition: 'all 0.2s ease',
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: 'primary.main',
+                            boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                          },
+                        },
+                      }}
+                    />
+
+                    <TextField
+                      required
+                      fullWidth
+                      label="Last Name"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                      size="medium"
+                      variant="outlined"
+                      error={!!validationErrors.lastName}
+                      helperText={validationErrors.lastName}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          transition: 'all 0.2s ease',
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: 'primary.main',
+                            boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                          },
+                        },
+                      }}
+                    />
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Paper>
+
+            {/* Location Section */}
+            <Paper
+              elevation={8}
+              sx={{
+                mb: 3,
+                borderRadius: 3,
+                background: '#ffffff',
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    mb: 2,
+                    color: 'primary.main',
+                    fontSize: '1.1rem',
+                  }}
+                >
+                  📍 Location
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <Stack spacing={2}>
+                  <Autocomplete
+                    options={locationOptions}
+                    getOptionLabel={(option) => option.name}
+                    loading={isSearchingLocation}
+                    value={selectedLocation}
+                    inputValue={locationSearch}
+                    onInputChange={(_, value, reason) => {
+                      if (reason === 'input') {
+                        handleLocationSearch(value);
+                      }
+                    }}
+                    onChange={(_, value) => handleLocationSelect(value)}
+                    noOptionsText={
+                      locationSearch.length < 3
+                        ? 'Type at least 3 characters to search'
+                        : 'No locations found'
+                    }
+                    filterOptions={(options) => options}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Search Location"
+                        placeholder="e.g., San Francisco, CA"
+                        fullWidth
+                        size="medium"
+                        variant="outlined"
+                        helperText="Search your city or region for exact coordinates"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            transition: 'all 0.2s ease',
+                            '&:hover fieldset': {
+                              borderColor: 'primary.main',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: 'primary.main',
+                              boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                            },
+                          },
+                        }}
+                      />
+                    )}
+                  />
+
+                  {/* Display Selected Location Coordinates */}
+                  {(formData.area || formData.latitude !== 0 || formData.longitude !== 0) && (
+                    <Box
+                      sx={{
+                        p: 2,
+                        bgcolor: 'rgba(16, 185, 129, 0.08)',
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'rgba(16, 185, 129, 0.2)',
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main', mb: 0.5 }}>
+                        ✓ Location Confirmed
+                      </Typography>
+                      {formData.area && (
+                        <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+                          {formData.area}
+                        </Typography>
+                      )}
+                      {(formData.latitude !== 0 || formData.longitude !== 0) && (
+                        <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontSize: '0.75rem' }}>
+                          {formData.latitude?.toFixed(4)}, {formData.longitude?.toFixed(4)}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                </Stack>
+              </CardContent>
+            </Paper>
+
+            {/* Sports Section */}
+            <Paper
+              elevation={8}
+              sx={{
+                mb: 3,
+                borderRadius: 3,
+                background: '#ffffff',
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    mb: 2,
+                    color: 'primary.main',
+                    fontSize: '1.1rem',
+                  }}
+                >
+                  ⚽ Sports Interests
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <Stack spacing={2}>
+                  {/* Selected Sports Chips */}
+                  {selectedSports.length > 0 && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, fontWeight: 600 }}>
+                        Selected ({selectedSports.length})
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {getSelectedSportNames().map((sportName) => (
+                          <Chip
+                            key={sportName}
+                            label={sportName}
+                            onDelete={() => {
+                              const sportId = availableSports.find((s) => s.name === sportName)?.id;
+                              if (sportId) handleSportChange(sportId);
+                            }}
+                            sx={{
+                              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)',
+                              color: 'primary.main',
+                              fontWeight: 600,
+                              '& .MuiChip-deleteIcon': {
+                                color: 'primary.main',
+                                '&:hover': {
+                                  color: 'primary.dark',
+                                },
+                              },
+                            }}
+                            disabled={isLoading}
+                            size="medium"
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Sports Autocomplete Dropdown */}
+                  <Autocomplete
+                    disabled={isLoading}
+                    options={filteredSports}
+                    getOptionLabel={(option) => option.name}
+                    value={selectedSport}
+                    inputValue={sportSearch}
+                    onInputChange={(_, value) => setSportSearch(value)}
+                    onChange={(_, value) => {
+                      if (value) {
+                        handleSportChange(value.id);
+                        setSportSearch('');
+                        setSelectedSport(null);
+                      }
+                    }}
+                    noOptionsText={
+                      sportSearch.length < 3 ? 'Type at least 3 characters to search' : 'No sports found'
+                    }
+                    filterOptions={(options) => {
+                      if (sportSearch.length < 3) {
+                        return [];
+                      }
+                      return options.filter((option) =>
+                        option.name.toLowerCase().includes(sportSearch.toLowerCase())
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Add Sports"
+                        placeholder="Search to add more sports..."
+                        fullWidth
+                        size="medium"
+                        variant="outlined"
+                        helperText="Search for sports you enjoy (min 3 characters)"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            transition: 'all 0.2s ease',
+                            '&:hover fieldset': {
+                              borderColor: 'primary.main',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: 'primary.main',
+                              boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                            },
+                          },
+                        }}
+                      />
+                    )}
+                  />
+                </Stack>
+              </CardContent>
+            </Paper>
+
+            {/* Bio Section */}
+            <Paper
+              elevation={8}
+              sx={{
+                mb: 4,
+                borderRadius: 3,
+                background: '#ffffff',
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    mb: 2,
+                    color: 'primary.main',
+                    fontSize: '1.1rem',
+                  }}
+                >
+                  About You
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  label="Bio"
+                  name="bio"
+                  placeholder="Tell other sports enthusiasts about yourself..."
+                  value={formData.bio}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  helperText="Write a short bio to help others get to know you (max 500 characters)"
+                  size="medium"
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      transition: 'all 0.2s ease',
+                      '&:hover fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'primary.main',
+                        boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                      },
+                    },
+                  }}
+                />
+              </CardContent>
+            </Paper>
+
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
+                disabled={isLoading || !isFormValid}
+                sx={{
+                  minWidth: 200,
+                  background: gradients.primary,
+                  '&:hover': {
+                    background: gradients.primaryHover,
+                  },
+                  '&:disabled': {
+                    opacity: 0.6,
+                  },
+                }}
+              >
+                {isLoading ? 'Saving...' : 'Save Profile'}
+              </Button>
+            </Box>
           </Box>
         </Box>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 }
